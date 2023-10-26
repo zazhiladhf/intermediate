@@ -16,5 +16,6 @@ func RegisterServiceProduct(router fiber.Router, db *gorm.DB) {
 		productRouter.Get("", handler.GetProducts)
 	}
 	router.Get("/product/:id", handler.GetProductById)
+	router.Put("/product/:id", handler.UpdateProduct)
 
 }

@@ -33,3 +33,8 @@ func (p PostgresGormRepository) FindByID(ctx context.Context, model Product, id 
 	findById := p.db.Where("id = ?", id).First(&model)
 	return model, findById.Error
 }
+
+func (p PostgresGormRepository) Update(ctx context.Context, model Product) error {
+
+	return p.db.Save(&model).Error
+}

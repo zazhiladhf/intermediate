@@ -148,3 +148,81 @@ func (h Handler) GetProductById(c *fiber.Ctx) error {
 	})
 
 }
+
+func (h Handler) UpdateProduct(c *fiber.Ctx) error {
+	var model Product
+	var req = CreateProductRequest{}
+	err := c.BodyParser(&req)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ERR BAD REQUEST",
+			"error":   err.Error(),
+		})
+	}
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ERR BAD REQUEST",
+			"error":   "invalid id",
+		})
+	}
+
+	product, err := h.svc.GetProductById(c.UserContext(), model, id)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ERR BAD REQUEST",
+			"error":   err.Error(),
+		})
+	}
+
+	// product = Product{
+	// 	Name:     req.Name,
+	// 	Category: req.Category,
+	// 	Price:    req.Price,
+	// 	Stock:    req.Stock,
+	// }
+
+	product.Name = req.Name
+	product.Category = req.Category
+	product.Price = req.Price
+	product.Stock = req.Stock
+
+	err = h.svc.UpdateProduct(c.UserContext(), product, id)
+	if err != nil {
+		var payload fiber.Map
+		httpCode := 400
+
+		if model.Id != id {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR BAD REQUEST",
+				"error":   err.Error(),
+			}
+			httpCode = http.StatusNotFound
+		} else if err == ErrEmptyName || err == ErrEmptyCategory || err == ErrEmptyPrice || err == ErrEmptyStock {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR BAD REQUEST",
+				"error":   "invaid id",
+			}
+			httpCode = http.StatusBadRequest
+		} else {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR INTERNAL",
+				"error":   "ada masalah pada server",
+			}
+			httpCode = http.StatusInternalServerError
+		}
+
+		return c.Status(httpCode).JSON(payload)
+	}
+	return c.Status(http.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "GET DATA SUCCESS",
+	})
+}
