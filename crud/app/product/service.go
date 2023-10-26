@@ -6,7 +6,7 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, req Product) (err error)
+	Create(ctx context.Context, model Product) (err error)
 	FindAll(ctx context.Context, models []Product) ([]Product, error)
 	FindByID(ctx context.Context, model Product, id int) (Product, error)
 	Update(ctx context.Context, model Product) error
@@ -37,7 +37,6 @@ func (s Service) CreateProduct(ctx context.Context, req Product) (err error) {
 }
 
 func (s Service) GetProducts(ctx context.Context, models []Product) ([]Product, error) {
-
 	products, err := s.repo.FindAll(ctx, models)
 	if err != nil {
 		return products, err
@@ -71,7 +70,6 @@ func (s Service) UpdateProduct(ctx context.Context, req Product, param int) (err
 }
 
 func (s Service) DeleteProduct(ctx context.Context, model Product, param int) (err error) {
-
 	if err = s.repo.Delete(ctx, model, param); err != nil {
 		log.Println("error when try to Delete to database with error :", err.Error())
 		return
