@@ -10,12 +10,10 @@ func RegisterServiceProduct(router fiber.Router, db *gorm.DB) {
 	svc := NewService(repo)
 	handler := NewHandler(svc)
 
-	var productRouter = router.Group("products")
-	{
-		productRouter.Post("", handler.CreateProduct)
-		productRouter.Get("", handler.GetProducts)
-	}
+	router.Post("/products", handler.CreateProduct)
+	router.Get("/products", handler.GetProducts)
 	router.Get("/product/:id", handler.GetProductById)
 	router.Put("/product/:id", handler.UpdateProduct)
+	router.Delete("/product/:id", handler.DeleteProduct)
 
 }

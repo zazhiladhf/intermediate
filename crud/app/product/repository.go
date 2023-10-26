@@ -38,3 +38,20 @@ func (p PostgresGormRepository) Update(ctx context.Context, model Product) error
 
 	return p.db.Save(&model).Error
 }
+
+func (p PostgresGormRepository) Delete(ctx context.Context, model Product, id int) error {
+	// var book models.SlotBooking
+	return p.db.Delete(&model, id).Error
+	// if err != nil {
+	// 	return err
+	// }
+	// if findResult.Error != nil {
+	// 	return findResult.Error
+	// }
+
+	// if findResult.RowsAffected == 0 {
+	// 	return gorm.ErrRecordNotFound
+	// }
+
+	// return nil
+}

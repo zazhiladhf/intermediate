@@ -100,7 +100,6 @@ func (h Handler) GetProducts(c *fiber.Ctx) error {
 }
 
 func (h Handler) GetProductById(c *fiber.Ctx) error {
-	// var uri = GetProductByIdUri{}
 	model := Product{}
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -179,13 +178,6 @@ func (h Handler) UpdateProduct(c *fiber.Ctx) error {
 		})
 	}
 
-	// product = Product{
-	// 	Name:     req.Name,
-	// 	Category: req.Category,
-	// 	Price:    req.Price,
-	// 	Stock:    req.Stock,
-	// }
-
 	product.Name = req.Name
 	product.Category = req.Category
 	product.Price = req.Price
@@ -225,4 +217,61 @@ func (h Handler) UpdateProduct(c *fiber.Ctx) error {
 		"success": true,
 		"message": "GET DATA SUCCESS",
 	})
+}
+
+func (h Handler) DeleteProduct(c *fiber.Ctx) error {
+	model := Product{}
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ERR BAD REQUEST",
+			"error":   "invalid id",
+		})
+	}
+
+	product, err := h.svc.GetProductById(c.UserContext(), model, id)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ERR BAD REQUEST",
+			"error":   err.Error(),
+		})
+	}
+
+	err = h.svc.DeleteProduct(c.UserContext(), product, id)
+	if err != nil {
+		var payload fiber.Map
+		httpCode := 400
+
+		if model.Id != id {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR BAD REQUEST",
+				"error":   err.Error(),
+			}
+			httpCode = http.StatusNotFound
+		} else if err == ErrEmptyName || err == ErrEmptyCategory || err == ErrEmptyPrice || err == ErrEmptyStock {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR BAD REQUEST",
+				"error":   "invaid id",
+			}
+			httpCode = http.StatusBadRequest
+		} else {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR INTERNAL",
+				"error":   "ada masalah pada server",
+			}
+			httpCode = http.StatusInternalServerError
+		}
+
+		return c.Status(httpCode).JSON(payload)
+	}
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "DELETE DATA SUCCESS",
+	})
+
 }
