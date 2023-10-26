@@ -100,10 +100,9 @@ func (h Handler) GetProducts(c *fiber.Ctx) error {
 }
 
 func (h Handler) GetProductById(c *fiber.Ctx) error {
-	var uri = GetProductByIdUri{}
+	// var uri = GetProductByIdUri{}
 	model := Product{}
-
-	id, err := strconv.Atoi(c.Params("id", ""))
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -112,41 +111,34 @@ func (h Handler) GetProductById(c *fiber.Ctx) error {
 		})
 	}
 
-	// err := c.uri(&input)
-	// if err != nil {
-	// 	response := helper.APIResponse("Failed to get detail of campaign", http.StatusBadRequest, "error", nil)
-	// 	c.JSON(http.StatusBadRequest, response)
-	// 	return
-	// }
-
 	product, err := h.svc.GetProductById(c.UserContext(), model, id)
 	if err != nil {
 		var payload fiber.Map
 		httpCode := 400
 
-		switch err {
-		case ErrEmptyName, ErrEmptyCategory, ErrEmptyPrice, ErrEmptyStock:
-			payload = fiber.Map{
-				"success": false,
-				"message": "ERR BAD REQUEST",
-				"error":   "invaid id",
-			}
-			httpCode = http.StatusBadRequest
-		case ErrNotFound:
+		if model.Id != id {
 			payload = fiber.Map{
 				"success": false,
 				"message": "ERR BAD REQUEST",
 				"error":   err.Error(),
 			}
 			httpCode = http.StatusNotFound
-		default:
+		} else if err == ErrEmptyName || err == ErrEmptyCategory || err == ErrEmptyPrice || err == ErrEmptyStock {
+			payload = fiber.Map{
+				"success": false,
+				"message": "ERR BAD REQUEST",
+				"error":   "invaid id",
+			}
+			httpCode = http.StatusBadRequest
+		} else {
 			payload = fiber.Map{
 				"success": false,
 				"message": "ERR INTERNAL",
-				"error":   err.Error(),
+				"error":   "ada masalah pada server",
 			}
 			httpCode = http.StatusInternalServerError
 		}
+
 		return c.Status(httpCode).JSON(payload)
 	}
 	return c.Status(http.StatusOK).JSON(fiber.Map{

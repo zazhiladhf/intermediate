@@ -30,6 +30,6 @@ func (p PostgresGormRepository) FindAll(ctx context.Context, models []Product) (
 }
 
 func (p PostgresGormRepository) FindByID(ctx context.Context, model Product, id int) (Product, error) {
-	findById := p.db.Where("id = ?", id).First(&gorm.ErrModelValueRequired)
+	findById := p.db.Where("id = ?", id).First(&model)
 	return model, findById.Error
 }
