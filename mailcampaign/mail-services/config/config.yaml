@@ -1,0 +1,10 @@
+app:
+  name: "mail-campaign"
+  port: ":4000"
+
+smtp:
+  host: "smtp.gmail.com"
+  port: 587
+  sender_name: "Zazhil Adhafi <zazhil24@gmail.com>"
+  auth_email: "zazhil24@gmail.com"
+  auth_password: "circioqtixpmhowi"
