@@ -1,15 +1,11 @@
 package app
 
 import (
-	"mailcampaign/mail-services/config"
+	"mailcampaign/config"
 
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gomail.v2"
 )
-
-// type Repository interface {
-// 	Create(ctx context.Context, model Product) (err error)
-// }
 
 type Service struct {
 	// repo Repository
@@ -40,5 +36,8 @@ func (s Service) SendMailService(ctx *gin.Context, to []string, cc []string, sub
 	)
 
 	err = dialer.DialAndSend(mailer)
+	if err != nil {
+		return err
+	}
 	return
 }

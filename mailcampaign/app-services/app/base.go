@@ -5,9 +5,9 @@ import (
 )
 
 func RegisterRoutes(router *gin.Engine) {
-	svc := NewService()
-	handler := NewHandler(svc)
+	// svc := NewService()
+	handler := NewHandler()
 
-	router.POST("/send", handler.SendMail)
+	router.POST("/send", handler.HandlerRequest)
 
 }

@@ -18,16 +18,40 @@ func NewHandler(svc Service) Handler {
 
 func (h Handler) SendMail(ctx *gin.Context) {
 	var cc []string
-	var req = RequestBody{}
-	err := ctx.ShouldBind(&req)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+	var req RequestBody
 
-	err = h.svc.SendMailService(ctx, req.To, cc, req.Subject, req.Message)
+	// err := ctx.ShouldBind(&req)
+	// if err != nil {
+	// 	ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+	// 		"error": err.Error(),
+	// 	})
+	// 	return
+	// }
+
+	// setup email tujuan
+	// to := []string{"user1@gmail.com", "user2@gmail.com"}
+	// setup cc
+	// cc := []string{"user3@gmail.com"}
+
+	// subject := "Test Mail"
+	// messagenya menjadi HTML
+	// message := `
+	// <html>
+	// 	<body>
+	// 		<h1> Hello From NooBeeID</h1>
+	// 		<button class="btn btn-primary ">Click Me</button>
+	// 	</body>
+	// </html>
+	// `
+
+	// panggil fungsi send mail
+	// err = sendMailGoMail(to, cc, subject, message)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// log.Println("success send mail to", append(to, cc...))
+
+	err := h.svc.SendMailService(ctx, req.To, cc, req.Subject, req.Message)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -38,6 +62,6 @@ func (h Handler) SendMail(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"message": req.Message,
-		"error":   "string", // if no error, this attribute will be remove
+		// "error":   "string", // if no error, this attribute will be remove
 	})
 }
