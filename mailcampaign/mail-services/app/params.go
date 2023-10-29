@@ -7,9 +7,3 @@ type RequestBody struct {
 	Message string   `json:"message"`
 	Type    string   `json:"type"`
 }
-
-type ResponseBody struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Error   string `json:"error"`
-}

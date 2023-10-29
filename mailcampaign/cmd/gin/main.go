@@ -28,14 +28,6 @@ func AppServicesServer() http.Handler {
 		log.Println("error when try to LoadConfig with error :", err.Error())
 	}
 
-	//handler with basic routing
-	router.GET("/hello", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "Hello World",
-			"version": "not set",
-		})
-	})
-
 	app.RegisterRoutes(router)
 
 	return router
@@ -51,14 +43,6 @@ func MailServicesServer() http.Handler {
 	if err != nil {
 		log.Println("error when try to LoadConfig with error :", err.Error())
 	}
-
-	//handler with basic routing
-	router.GET("/hello", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "Hello World",
-			"version": "not set",
-		})
-	})
 
 	appMailService.RegisterRoutes(router)
 

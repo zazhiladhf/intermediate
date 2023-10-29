@@ -11,17 +11,13 @@ import (
 )
 
 type Handler struct {
-	// svc Service
 }
 
 func NewHandler() Handler {
-	return Handler{
-		// svc: svc,
-	}
+	return Handler{}
 }
 
 func (h Handler) HandlerRequest(ctx *gin.Context) {
-
 	url := "http://localhost:4001"
 	var reqBody RequestBody
 	err := ctx.ShouldBindJSON(&reqBody)
@@ -32,20 +28,19 @@ func (h Handler) HandlerRequest(ctx *gin.Context) {
 		return
 	}
 
+	reqData := RequestBody{
+		From:    reqBody.From,
+		To:      reqBody.To,
+		Subject: reqBody.Subject,
+		Message: reqBody.Message,
+		Type:    reqBody.Type,
+	}
+
 	// ubah request data menjadi sebuah []byte
-	byteReq, err := json.Marshal(reqBody)
+	byteReq, err := json.Marshal(reqData)
 	if err != nil {
 		panic(err)
 	}
-
-	// req, err := http.NewRequest("POST", url, bytes.NewBuffer(byteReq))
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, gin.H{
-	// 		"error": err.Error(),
-	// 	})
-	// 	return
-	// }
-	// req.Header.Set("Content-Type", "application/json")
 
 	// data yg dikirim via http, adalah sebuah bytes buffer
 	// jadi perlu kita ubah dari []byte ke bytes buffer
@@ -62,8 +57,8 @@ func (h Handler) HandlerRequest(ctx *gin.Context) {
 	// proses validasi status code
 	// karena dari service1 nge return 200, maka perlu di pastikan bahwa
 	// yang di porses hanya yg status code nya 200
-	if resp.StatusCode != http.StatusCreated {
-		log.Println("ada error nih")
+	if resp.StatusCode != http.StatusOK {
+		log.Println("ada error gak?")
 		responseBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatalf("error saat parsing response body with error : %v", err.Error())
@@ -86,10 +81,9 @@ func (h Handler) HandlerRequest(ctx *gin.Context) {
 	log.Println("Response :", string(responseBytes))
 
 	// Handle response
-	ctx.JSON(http.StatusCreated, gin.H{
+	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Request sent successfully",
-		// "error":   "string", // if no error, this attribute will be remove
 	})
 
 }

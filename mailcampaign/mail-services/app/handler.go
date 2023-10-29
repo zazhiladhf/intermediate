@@ -18,15 +18,15 @@ func NewHandler(svc Service) Handler {
 
 func (h Handler) SendMail(ctx *gin.Context) {
 	var cc []string
-	var req RequestBody
+	var reqBody RequestBody
 
-	// err := ctx.ShouldBind(&req)
-	// if err != nil {
-	// 	ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-	// 		"error": err.Error(),
-	// 	})
-	// 	return
-	// }
+	err := ctx.ShouldBind(&reqBody)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	// setup email tujuan
 	// to := []string{"user1@gmail.com", "user2@gmail.com"}
@@ -51,7 +51,15 @@ func (h Handler) SendMail(ctx *gin.Context) {
 	// }
 	// log.Println("success send mail to", append(to, cc...))
 
-	err := h.svc.SendMailService(ctx, req.To, cc, req.Subject, req.Message)
+	reqData := RequestBody{
+		From:    reqBody.From,
+		To:      reqBody.To,
+		Subject: reqBody.Subject,
+		Message: reqBody.Message,
+		Type:    reqBody.Type,
+	}
+
+	err = h.svc.SendMailService(ctx, reqData.To, cc, reqData.Subject, reqData.Message)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -59,9 +67,9 @@ func (h Handler) SendMail(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
+	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": req.Message,
+		"message": reqData.Message,
 		// "error":   "string", // if no error, this attribute will be remove
 	})
 }
