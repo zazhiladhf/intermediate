@@ -25,7 +25,12 @@ func main() {
 		panic(err)
 	}
 
-	product.RegisterServiceProduct(router, db)
+	dbSqlx, err := database.ConnectSqlxPostgres(config.Cfg.DB)
+	if err != nil {
+		panic(err)
+	}
+
+	product.RegisterServiceProduct(router, db, dbSqlx, nil)
 
 	router.Listen(config.Cfg.App.Port)
 }

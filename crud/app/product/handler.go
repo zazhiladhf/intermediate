@@ -215,7 +215,7 @@ func (h Handler) UpdateProduct(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusCreated).JSON(fiber.Map{
 		"success": true,
-		"message": "GET DATA SUCCESS",
+		"message": "UPDATE SUCCESS",
 	})
 }
 

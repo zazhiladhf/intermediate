@@ -9,7 +9,7 @@ type Repository interface {
 	Create(ctx context.Context, model Product) (err error)
 	FindAll(ctx context.Context, models []Product) ([]Product, error)
 	FindByID(ctx context.Context, model Product, id int) (Product, error)
-	Update(ctx context.Context, model Product) error
+	Update(ctx context.Context, id int, model Product) error
 	Delete(ctx context.Context, model Product, id int) error
 }
 
@@ -61,7 +61,7 @@ func (s Service) UpdateProduct(ctx context.Context, req Product, param int) (err
 		return
 	}
 
-	if err = s.repo.Update(ctx, req); err != nil {
+	if err = s.repo.Update(ctx, param, req); err != nil {
 		log.Println("error when try to Update to database with error :", err.Error())
 		return
 	}
