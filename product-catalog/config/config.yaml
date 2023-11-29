@@ -1,0 +1,10 @@
+app:
+  name: "Product Catalog"
+  port: ":4000"
+
+db:
+  host: "localhost"
+  port: "5432"
+  user: "postgres"
+  password: "74712331"
+  name: "product-catalog"
