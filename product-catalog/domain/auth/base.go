@@ -6,12 +6,23 @@ import (
 )
 
 func Run(router fiber.Router, db *sqlx.DB) {
-	repo := NewRepository(db)
+	repo := NewPostgreSqlxRepository(db)
 	svc := newService(repo)
 	handler := newHandler(svc)
-	auth := router.Group("auth")
+
+	v1 := router.Group("v1")
+	auth := v1.Group("auth")
 	{
-		auth.Post("/signup", handler.signUp)
-		auth.Post("/signin", handler.signIn)
+		auth.Post("/register", handler.register)
+		auth.Post("/signin", handler.login)
 	}
+	router.Get("", func(c *fiber.Ctx) error {
+		return c.SendString("I'm a GET request!")
+	})
+
+	// auth := router.Group("auth")
+	// {
+	// 	auth.Post("/register", handler.signUp)
+	// 	auth.Post("/signin", handler.signIn)
+	// }
 }

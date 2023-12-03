@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"product-catalog/config"
+	"product-catalog/domain/auth"
 	"product-catalog/domain/product"
 	"product-catalog/pkg/database"
 
@@ -31,6 +32,7 @@ func main() {
 		panic(err)
 	}
 
+	auth.Run(router, dbSqlx)
 	product.RegisterServiceProduct(router, dbSqlx)
 
 	router.Listen(config.Cfg.App.Port)

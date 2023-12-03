@@ -1,23 +1,25 @@
 package auth
 
-type register struct {
-	Email    string `json:"email"`
+type registerRequest struct {
+	Email    string `json:"email" binding:"email"`
 	Password string `json:"password"`
 }
 
-type registerResponse struct {
-	Id       string `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+// type registerResponse struct {
+// 	Id       int    `json:"id"`
+// 	Email    string `json:"email"`
+// 	Password string `json:"password"`
+// 	Role     string `json:"role"`
+// }
 
-func newRegisterResponse(item Auth) registerResponse {
-	return registerResponse{
-		Id:       item.Id.String(),
-		Email:    item.Email,
-		Password: item.Password,
-	}
-}
+// func newRegisterResponse(item Auth) registerResponse {
+// 	return registerResponse{
+// 		Id:       item.Id,
+// 		Email:    item.Email,
+// 		Password: item.Password,
+// 		Role:     item.Role,
+// 	}
+// }
 
 type login struct {
 	Email    string `json:"email"`

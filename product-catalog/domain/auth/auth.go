@@ -2,24 +2,35 @@ package auth
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
+	"net/mail"
 
-	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Auth struct {
-	Id       ulid.ULID `json:"id" db:"id"`
-	Email    string    `json:"email" db:"email"`
-	Password string    `json:"password" db:"password"`
-	Role     string    `json:"role" db:"role"`
+	Id       int    `json:"id" db:"id"`
+	Email    string `json:"email" db:"email"`
+	Password string `json:"password" db:"password"`
+	Role     string `json:"role" db:"role"`
 }
 
 var (
 	ErrEmailEmpty      = errors.New("email required")
-	ErrEmailNotFound   = errors.New("invalid email")
+	ErrInvalidEmail    = errors.New("invalid email")
 	ErrPasswordEmpty   = errors.New("password required")
 	ErrInvalidPassword = errors.New("invalid password")
-	ErrPasswordLength  = errors.New("password length must be equal to or greater than 6")
+	ErrDuplicateEmail  = errors.New("email already used")
+	ErrRepository      = errors.New("error repository")
+	ErrInternalServer  = errors.New("unknown error")
+
+	ErrCodeEmailEmpty      = errorCodeBadRequest("01")
+	ErrCodeInvalidEmail    = errorCodeBadRequest("02")
+	ErrCodePassworEmpty    = errorCodeBadRequest("03")
+	ErrCodeInvalidPassword = errorCodeBadRequest("04")
+	ErrCodeDuplicateEmail  = errorCodeConflict("01")
+	ErrCodeInternalServer  = errorCodeInternalServer("01")
 )
 
 func NewAuth() Auth {
@@ -36,9 +47,13 @@ func (a *Auth) EncryptPassword() (err error) {
 	return
 }
 
-func (a Auth) FromRegister(req register) (Auth, error) {
+func (a Auth) FormRegister(req registerRequest) (Auth, error) {
 	if req.Email == "" {
 		return a, ErrEmailEmpty
+	}
+
+	if !valid(req.Email) {
+		return a, ErrInvalidEmail
 	}
 
 	if req.Password == "" {
@@ -46,18 +61,22 @@ func (a Auth) FromRegister(req register) (Auth, error) {
 	}
 
 	if len(req.Password) < 6 {
-		return a, ErrPasswordLength
+		return a, ErrInvalidPassword
 	}
 
 	a.Email = req.Email
 	a.Password = req.Password
-	a.Id = ulid.Make()
+	a.Role = "merchant"
 	return a, nil
 }
 
-func (a Auth) FromLogin(req login) (Auth, error) {
+func (a Auth) FormLogin(req login) (Auth, error) {
 	if req.Email == "" {
 		return a, ErrEmailEmpty
+	}
+
+	if !valid(req.Email) {
+		return a, ErrInvalidEmail
 	}
 
 	if req.Password == "" {
@@ -65,7 +84,7 @@ func (a Auth) FromLogin(req login) (Auth, error) {
 	}
 
 	if len(req.Password) <= 6 {
-		return a, ErrPasswordLength
+		return a, ErrInvalidPassword
 	}
 
 	a.Email = req.Email
@@ -73,11 +92,31 @@ func (a Auth) FromLogin(req login) (Auth, error) {
 	return a, nil
 }
 
-func (a Auth) ValidatePasswordFromPlainText(plainText string) (ok bool, err error) {
+func (a Auth) ValidatePassword(plainText string) (ok bool, err error) {
 	err = bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(plainText))
 	if err != nil {
 		return ok, ErrInvalidPassword
 	}
 	ok = true
 	return
+}
+
+func errorCodeBadRequest(n string) string {
+	concatenated := fmt.Sprintf("%d%s", http.StatusBadRequest, n)
+	return concatenated
+}
+
+func errorCodeConflict(n string) string {
+	concatenated := fmt.Sprintf("%d%s", http.StatusConflict, n)
+	return concatenated
+}
+
+func errorCodeInternalServer(n string) string {
+	concatenated := fmt.Sprintf("%d%s", http.StatusInternalServerError, n)
+	return concatenated
+}
+
+func valid(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }

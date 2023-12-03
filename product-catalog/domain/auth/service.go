@@ -26,16 +26,17 @@ func newService(repo repository) authService {
 	}
 }
 
-func (a authService) register(ctx context.Context, req Auth) (authItem Auth, err error) {
-	if err = req.EncryptPassword(); err != nil {
+func (a authService) register(ctx context.Context, req Auth) (err error) {
+	err = req.EncryptPassword()
+	if err != nil {
+		return
+	}
+	err = a.repo.save(ctx, req)
+	if err != nil {
 		return
 	}
 
-	if err = a.repo.save(ctx, req); err != nil {
-		return
-	}
-
-	authItem = req
+	// authItem = req
 	return
 }
 
@@ -45,7 +46,7 @@ func (a authService) login(ctx context.Context, req Auth) (item Auth, err error)
 		return
 	}
 
-	ok, err := auth.ValidatePasswordFromPlainText(req.Password)
+	ok, err := auth.ValidatePassword(req.Password)
 	if err != nil {
 		return req, err
 	}

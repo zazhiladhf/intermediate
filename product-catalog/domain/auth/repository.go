@@ -6,19 +6,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type Repository struct {
+type PostgreSqlxRepository struct {
 	db *sqlx.DB
 }
 
-func NewRepository(db *sqlx.DB) Repository {
-	return Repository{
+func NewPostgreSqlxRepository(db *sqlx.DB) PostgreSqlxRepository {
+	return PostgreSqlxRepository{
 		db: db,
 	}
 }
 
-func (p Repository) save(ctx context.Context, auth Auth) (err error) {
+func (p PostgreSqlxRepository) save(ctx context.Context, auth Auth) (err error) {
 	query := `
-		INSERT INTO auth (
+		INSERT INTO auths (
 			email, password, role
 		) VALUES (
 			:email, :password, :role
@@ -37,8 +37,8 @@ func (p Repository) save(ctx context.Context, auth Auth) (err error) {
 	return
 }
 
-func (p Repository) findByEmail(ctx context.Context, email string) (auth Auth, err error) {
-	query := `SELECT id, email, password, role FROM auth WHERE email = $1`
+func (p PostgreSqlxRepository) findByEmail(ctx context.Context, email string) (auth Auth, err error) {
+	query := `SELECT id, email, password, role FROM auths WHERE email = $1`
 
 	err = p.db.Get(&auth, query, email)
 	if err != nil {

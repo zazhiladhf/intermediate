@@ -17,37 +17,38 @@ func newHandler(svc authService) authHandler {
 	}
 }
 
-func (a authHandler) signUp(c *fiber.Ctx) error {
-	var req register
+func (a authHandler) register(c *fiber.Ctx) error {
+	var req registerRequest
 
-	if err := c.BodyParser(&req); err != nil {
+	err := c.BodyParser(&req)
+	if err != nil {
 		return WriteError(c, err)
 	}
 
-	model, err := NewAuth().FromRegister(req)
+	model, err := NewAuth().FormRegister(req)
 	if err != nil {
 		log.Println(err)
 		return WriteError(c, err)
 	}
 
-	item, err := a.svc.register(c.UserContext(), model)
+	err = a.svc.register(c.UserContext(), model)
 	if err != nil {
 		log.Println(err)
 		return WriteError(c, err)
 	}
 
-	resp := newRegisterResponse(item)
+	// resp := newRegisterResponse(item)
 
-	return WriteSuccess(c, resp, http.StatusCreated)
+	return WriteSuccess(c, true, "registration success", http.StatusCreated, nil)
 }
 
-func (a authHandler) signIn(c *fiber.Ctx) error {
+func (a authHandler) login(c *fiber.Ctx) error {
 	var req login
 	if err := c.BodyParser(&req); err != nil {
 		return WriteError(c, err)
 	}
 
-	model, err := NewAuth().FromLogin(req)
+	model, err := NewAuth().FormLogin(req)
 	if err != nil {
 		return WriteError(c, err)
 	}
@@ -57,5 +58,5 @@ func (a authHandler) signIn(c *fiber.Ctx) error {
 		return WriteError(c, err)
 	}
 
-	return WriteSuccess(c, item, http.StatusOK)
+	return WriteSuccess(c, true, "login success", http.StatusOK, item)
 }
