@@ -16,7 +16,7 @@ func NewPostgreSqlxRepository(db *sqlx.DB) PostgreSqlxRepository {
 	}
 }
 
-func (p PostgreSqlxRepository) save(ctx context.Context, auth Auth) (err error) {
+func (p PostgreSqlxRepository) Save(ctx context.Context, auth Auth) (err error) {
 	query := `
 		INSERT INTO auths (
 			email, password, role
@@ -37,7 +37,7 @@ func (p PostgreSqlxRepository) save(ctx context.Context, auth Auth) (err error) 
 	return
 }
 
-func (p PostgreSqlxRepository) findByEmail(ctx context.Context, email string) (auth Auth, err error) {
+func (p PostgreSqlxRepository) FindByEmail(ctx context.Context, email string) (auth Auth, err error) {
 	query := `SELECT id, email, password, role FROM auths WHERE email = $1`
 
 	err = p.db.Get(&auth, query, email)
@@ -46,4 +46,16 @@ func (p PostgreSqlxRepository) findByEmail(ctx context.Context, email string) (a
 	}
 
 	return
+}
+
+func (p PostgreSqlxRepository) IsEmailAlreadyExists(ctx context.Context, email string) (bool, error) {
+	var auth Auth
+	query := `SELECT id, email, password, role FROM auths WHERE email = $1`
+
+	err := p.db.Get(&auth, query, email)
+	if err != nil {
+		return false, err
+	}
+
+	return true, err
 }

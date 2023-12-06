@@ -2,19 +2,15 @@ package auth
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
 	"net/mail"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Auth struct {
-	Id       int    `json:"id" db:"id"`
-	Email    string `json:"email" db:"email"`
-	Password string `json:"password" db:"password"`
-	Role     string `json:"role" db:"role"`
-}
+const (
+	UniqueViolationErr = pq.ErrorCode("23505")
+)
 
 var (
 	ErrEmailEmpty      = errors.New("email required")
@@ -25,13 +21,21 @@ var (
 	ErrRepository      = errors.New("error repository")
 	ErrInternalServer  = errors.New("unknown error")
 
-	ErrCodeEmailEmpty      = errorCodeBadRequest("01")
-	ErrCodeInvalidEmail    = errorCodeBadRequest("02")
-	ErrCodePassworEmpty    = errorCodeBadRequest("03")
-	ErrCodeInvalidPassword = errorCodeBadRequest("04")
-	ErrCodeDuplicateEmail  = errorCodeConflict("01")
-	ErrCodeInternalServer  = errorCodeInternalServer("01")
+	// ErrCodeEmailEmpty      = errorCodeBadRequest("01")
+	// ErrCodeInvalidEmail    = errorCodeBadRequest("02")
+	// ErrCodePasswordEmpty   = errorCodeBadRequest("03")
+	// ErrCodeInvalidPassword = errorCodeBadRequest("04")
+	// ErrCodeDuplicateEmail  = errorCodeConflict("01")
+	// ErrCodeRepository      = errorCodeInternalServer("01")
+	// ErrCodeInternalServer  = "99999"
 )
+
+type Auth struct {
+	Id       int    `json:"id" db:"id"`
+	Email    string `json:"email" db:"email" validate:"required,email"`
+	Password string `json:"password" db:"password" validate:"required"`
+	Role     string `json:"role" db:"role" validate:"required"`
+}
 
 func NewAuth() Auth {
 	return Auth{}
@@ -47,27 +51,53 @@ func (a *Auth) EncryptPassword() (err error) {
 	return
 }
 
-func (a Auth) FormRegister(req registerRequest) (Auth, error) {
-	if req.Email == "" {
-		return a, ErrEmailEmpty
+func (a Auth) ValidateFormRegister() (err error) {
+	if a.Email == "" {
+		return ErrEmailEmpty
 	}
 
-	if !valid(req.Email) {
-		return a, ErrInvalidEmail
+	if !valid(a.Email) {
+		return ErrInvalidEmail
 	}
 
-	if req.Password == "" {
-		return a, ErrPasswordEmpty
+	if a.Password == "" {
+		return ErrPasswordEmpty
 	}
 
-	if len(req.Password) < 6 {
-		return a, ErrInvalidPassword
+	if len(a.Password) < 6 {
+		return ErrInvalidPassword
 	}
 
-	a.Email = req.Email
-	a.Password = req.Password
-	a.Role = "merchant"
-	return a, nil
+	// if err != nil && errors.Is(err, UniqueViolationErr) {
+	// 	return ErrDuplicateEmail
+	// }
+
+	// if err.Error() == "email already used" {
+	// 	return ErrDuplicateEmail
+	// }
+
+	// if a.Email == a.Email {
+	// 	return ErrDuplicateEmail
+	// }
+
+	// if e := pgerror.UniqueViolation(err); e != nil {
+	// 	// you can use e here to check the fields et al
+	// 	return ErrDuplicateEmail
+	// }
+
+	// if err != nil && pgerror.UniqueViolation(err) != nil {
+	// 	return ErrDuplicateEmail
+	// }
+
+	// var duplicateEntryError = &pgconn.PgError{Code: "23505"}
+	// if errors.As(err, &duplicateEntryError) {
+	// 	return ErrDuplicateEmail
+	// }
+
+	// a.Email = req.Email
+	// a.Password = req.Password
+	// a.Role = "merchant"
+	return nil
 }
 
 func (a Auth) FormLogin(req login) (Auth, error) {
@@ -101,22 +131,29 @@ func (a Auth) ValidatePassword(plainText string) (ok bool, err error) {
 	return
 }
 
-func errorCodeBadRequest(n string) string {
-	concatenated := fmt.Sprintf("%d%s", http.StatusBadRequest, n)
-	return concatenated
-}
+// func errorCodeBadRequest(n string) string {
+// 	concatenated := fmt.Sprintf("%d%s", http.StatusBadRequest, n)
+// 	return concatenated
+// }
 
-func errorCodeConflict(n string) string {
-	concatenated := fmt.Sprintf("%d%s", http.StatusConflict, n)
-	return concatenated
-}
+// func errorCodeConflict(n string) string {
+// 	concatenated := fmt.Sprintf("%d%s", http.StatusConflict, n)
+// 	return concatenated
+// }
 
-func errorCodeInternalServer(n string) string {
-	concatenated := fmt.Sprintf("%d%s", http.StatusInternalServerError, n)
-	return concatenated
-}
+// func errorCodeInternalServer(n string) string {
+// 	concatenated := fmt.Sprintf("%d%s", http.StatusInternalServerError, n)
+// 	return concatenated
+// }
 
 func valid(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
 }
+
+// func (a Auth) isUsed(email string) bool {
+// 	var ctx context.Context
+// 	var req registerRequest
+// 	usedEmail, _ := newHandler(authService{}).svc.IsEmailAvailable(ctx, req)
+// 	return usedEmail
+// }

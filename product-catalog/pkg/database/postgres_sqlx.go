@@ -42,7 +42,8 @@ func Migrate(db *sqlx.DB) (err error) {
 			id SERIAL PRIMARY KEY,
 			email varchar(100),
 			password varchar(100),
-			role varchar(100)
+			role varchar(100),
+			UNIQUE (email)
 		);
 	`
 	log.Println("running db migration")

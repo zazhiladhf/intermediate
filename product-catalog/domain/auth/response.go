@@ -1,66 +1,63 @@
 package auth
 
-import (
-	"github.com/gofiber/fiber/v2"
-)
+import "github.com/gofiber/fiber/v2"
 
 type Response struct {
-	Success   bool        `json:"success"`
-	Message   string      `json:"message"`
-	Error     *string     `json:"error,omitempty"`
-	ErrorCode string      `json:"error_code,omitempty"`
-	Payload   interface{} `json:"payload,omitempty"`
+	HttpCode  int    `json:"-"`
+	Success   bool   `json:"success"`
+	Message   string `json:"message"`
+	Error     string `json:"error,omitempty"`
+	ErrorCode string `json:"error_code,omitempty"`
+	// Payload   Payload `json:"payload,omitempty"`
 }
 
-func WriteError(c *fiber.Ctx, err error) error {
-	switch {
-	case err == ErrEmailEmpty:
-		return write(c, "bad request", err.Error(), ErrCodeEmailEmpty, nil)
-	case err == ErrInvalidEmail:
-		return write(c, "bad request", err.Error(), ErrCodeInvalidEmail, nil)
-	case err == ErrPasswordEmpty:
-		return write(c, "bad request", err.Error(), ErrCodePassworEmpty, nil)
-	case err == ErrInvalidPassword:
-		return write(c, "bad request", err.Error(), ErrCodeInvalidPassword, nil)
-	default:
-		return write(c, "internal server error", "error repository", ErrCodeInternalServer, nil)
+type Payload struct {
+	AccessToken string `json:"access_token,omitempty"`
+	Role        string `json:"role,omitempty"`
+}
+
+func ApiResponse(c *fiber.Ctx, httpCode int, success bool, message string, err string, errorCode string) (resp Response) {
+	c = c.Status(httpCode)
+
+	jsonResponse := Response{
+		HttpCode:  httpCode,
+		Success:   success,
+		Message:   message,
+		Error:     err,
+		ErrorCode: errorCode,
 	}
+	return jsonResponse
 }
 
-func WriteSuccess(c *fiber.Ctx, success bool, message string, statusCode int, payload interface{}) error {
-	resp := Response{
-		Success: success,
-		Message: message,
-		// ErrorCode: errorCode,
-		// Payload: payload,
-	}
-	c = c.Status(statusCode)
-	return c.JSON(resp)
-}
+// func ResponseError(c *fiber.Ctx, err error) error {
+// 	switch err {
+// 	case ErrEmailEmpty:
+// 		return ApiResponse(c, "bad request", err.Error(), http.StatusBadRequest, ErrCodeEmailEmpty, nil)
+// 	case ErrInvalidEmail:
+// 		return ApiResponse(c, "bad request", err.Error(), http.StatusBadRequest, ErrCodeInvalidEmail, nil)
+// 	case ErrPasswordEmpty:
+// 		return ApiResponse(c, "bad request", err.Error(), http.StatusBadRequest, ErrCodePasswordEmpty, nil)
+// 	case ErrInvalidPassword:
+// 		return ApiResponse(c, "bad request", err.Error(), http.StatusBadRequest, ErrCodeInvalidPassword, nil)
+// 	case ErrDuplicateEmail:
+// 		// log.Println("err:", err)
+// 		return ApiResponse(c, "duplicate entry", err.Error(), http.StatusConflict, ErrCodeDuplicateEmail, nil)
+// 	case ErrInternalServer:
+// 		return ApiResponse(c, "internal server error", "unknown error", http.StatusInternalServerError, ErrCodeInternalServer, nil)
+// 	default:
+// 		log.Println("err:", err)
+// 		return ApiResponse(c, "internal server error", "error repository", http.StatusInternalServerError, ErrCodeInternalServer, nil)
+// 	}
+// }
 
-func write(c *fiber.Ctx, message string, err string, statusCode string, payload interface{}) error {
-	var httpStatusCode int
-	c = c.Status(httpStatusCode)
-	isSuccess := httpStatusCode >= 200 && httpStatusCode < 300
-
-	var resp Response
-	if isSuccess {
-		resp = Response{
-			Success:   true,
-			Message:   message,
-			Error:     &err,
-			ErrorCode: statusCode,
-			// StatusCode: statusCode,
-			// Payload:     payload,
-		}
-	} else {
-		resp = Response{
-			Success:   false,
-			Message:   message,
-			Error:     &err,
-			ErrorCode: statusCode,
-		}
-	}
-
-	return c.JSON(resp)
-}
+// func ResponseSuccess(c *fiber.Ctx, success bool, message string, statusCode int, payload interface{}) error {
+// 	resp := Response{
+// 		Success:   success,
+// 		Message:   message,
+// 		Error:     "",
+// 		ErrorCode: "",
+// 		// Payload:   Payload{},
+// 	}
+// 	c = c.Status(statusCode)
+// 	return c.JSON(resp)
+// }

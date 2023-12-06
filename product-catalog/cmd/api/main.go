@@ -18,7 +18,7 @@ func main() {
 
 	router := fiber.New(fiber.Config{
 		AppName: config.Cfg.App.Name,
-		Prefork: true,
+		// Prefork: true,
 	})
 
 	dbSqlx, err := database.ConnectPostgresSqlx(config.Cfg.DB)

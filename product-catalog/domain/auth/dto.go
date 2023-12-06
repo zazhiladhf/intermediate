@@ -26,7 +26,7 @@ type login struct {
 	Password string `json:"password"`
 }
 
-type loginResponse struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+// type loginResponse struct {
+// 	Email    string `json:"email"`
+// 	Password string `json:"password"`
+// }

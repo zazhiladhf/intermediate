@@ -151,6 +151,7 @@ func (h Handler) UpdateProduct(c *fiber.Ctx) error {
 	var model Product
 	var req = CreateProductRequest{}
 	err := c.BodyParser(&req)
+
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
