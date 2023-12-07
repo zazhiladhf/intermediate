@@ -8,3 +8,10 @@ db:
   user: "postgres"
   password: "74712331"
   name: "product-catalog"
+
+redis:
+  host: "localhost"
+  port: "6377"
+  # user: "postgres"
+  password: ""
+  # name: "product-catalog"

@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	App App `yaml:"app"`
-	DB  DB  `yaml:"db"`
+	App   App   `yaml:"app"`
+	DB    DB    `yaml:"db"`
+	Redis Redis `yaml:"redis"`
 }
 
 type App struct {
@@ -22,6 +23,12 @@ type DB struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Name     string `yaml:"name"`
+}
+
+type Redis struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Password string `yaml:"password"`
 }
 
 var Cfg *Config

@@ -4,12 +4,7 @@ import (
 	"errors"
 	"net/mail"
 
-	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
-)
-
-const (
-	UniqueViolationErr = pq.ErrorCode("23505")
 )
 
 var (
@@ -100,7 +95,7 @@ func (a Auth) ValidateFormRegister() (err error) {
 	return nil
 }
 
-func (a Auth) FormLogin(req login) (Auth, error) {
+func (a Auth) ValidateFormLogin(req loginRequest) (Auth, error) {
 	if req.Email == "" {
 		return a, ErrEmailEmpty
 	}
@@ -113,7 +108,7 @@ func (a Auth) FormLogin(req login) (Auth, error) {
 		return a, ErrPasswordEmpty
 	}
 
-	if len(req.Password) <= 6 {
+	if len(req.Password) < 6 {
 		return a, ErrInvalidPassword
 	}
 

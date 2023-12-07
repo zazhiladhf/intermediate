@@ -14,7 +14,7 @@ func Run(router fiber.Router, db *sqlx.DB) {
 	auth := v1.Group("auth")
 	{
 		auth.Post("/register", handler.RegisterAuth)
-		// auth.Post("/signin", handler.login)
+		auth.Post("/login", handler.Login)
 	}
 	router.Get("", func(c *fiber.Ctx) error {
 		return c.SendString("I'm a GET request!")

@@ -2,29 +2,35 @@ package auth
 
 import (
 	"errors"
+	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-type Service interface {
-	GenerateToken(userID int) (string, error)
-	ValidateToken(encodedToken string) (*jwt.Token, error)
+// type Service interface {
+// 	GenerateToken(userID int) (string, error)
+// 	ValidateToken(encodedToken string) (*jwt.Token, error)
+// }
+
+type JwtService struct {
 }
 
-type jwtService struct {
-}
+// var Jwt *JwtService
 
 var SECRET_KEY = []byte("BWASTARTUP_s3cr3T_k3Y")
 
-func NewService() *jwtService {
-	return &jwtService{}
+func NewService() *JwtService {
+	return &JwtService{}
 }
 
-func (s *jwtService) GenerateToken(userID int) (string, error) {
-	claim := jwt.MapClaims{}
-	claim["user_id"] = userID
+func GenerateToken(email string) (string, error) {
+	claims := jwt.MapClaims{
+		"email": email,
+		"exp":   jwt.NewNumericDate(time.Now().Add(10 * time.Minute)).Unix(),
+	}
+	// claim["user_id"] = email
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	signedToken, err := token.SignedString(SECRET_KEY)
 	if err != nil {
@@ -34,7 +40,7 @@ func (s *jwtService) GenerateToken(userID int) (string, error) {
 	return signedToken, nil
 }
 
-func (s *jwtService) ValidateToken(encodedToken string) (*jwt.Token, error) {
+func ValidateToken(encodedToken string) (*jwt.Token, error) {
 	token, err := jwt.Parse(encodedToken, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {

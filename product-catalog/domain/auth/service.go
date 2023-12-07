@@ -79,24 +79,43 @@ func (s authService) CreateAuth(ctx context.Context, req Auth) (err error) {
 	return
 }
 
-// func (a authService) login(ctx context.Context, req Auth) (item Auth, err error) {
-// 	auth, err := a.repo.findByEmail(ctx, req.Email)
-// 	if err != nil {
-// 		return
-// 	}
+func (s authService) Login(ctx context.Context, req loginRequest) (item Auth, err error) {
+	email := req.Email
+	password := req.Password
 
-// 	ok, err := auth.ValidatePassword(req.Password)
-// 	if err != nil {
-// 		return req, err
-// 	}
+	itemAuth, err := item.ValidateFormLogin(req)
+	if err != nil {
+		log.Println("error when try to validate request with error", err.Error(), itemAuth)
+		return
+	}
 
-// 	if !ok {
-// 		return req, ErrInvalidPassword
-// 	}
+	itemAuth, err = s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Println("error when try to findbyemail with error", err.Error(), itemAuth)
+			return itemAuth, ErrRepository
+		}
+	}
 
-// 	return auth, nil
+	if itemAuth.Email == "" {
+		log.Println("error when try to check email with error", err.Error(), itemAuth)
+		return itemAuth, ErrInvalidEmail
+	}
 
-// }
+	ok, err := itemAuth.ValidatePassword(password)
+	if err != nil {
+		log.Println("error when try to validate password with error", err.Error(), itemAuth)
+		return itemAuth, ErrInvalidPassword
+	}
+
+	if !ok {
+		log.Println("error when try to !ok with error", err.Error(), itemAuth)
+		return itemAuth, ErrInternalServer
+	}
+
+	return
+
+}
 
 // func (a authService) isEmailAvailable(ctx context.Context, req registerRequest) (bool, error) {
 // 	// var req registerRequest

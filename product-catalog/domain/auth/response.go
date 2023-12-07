@@ -3,12 +3,12 @@ package auth
 import "github.com/gofiber/fiber/v2"
 
 type Response struct {
-	HttpCode  int    `json:"-"`
-	Success   bool   `json:"success"`
-	Message   string `json:"message"`
-	Error     string `json:"error,omitempty"`
-	ErrorCode string `json:"error_code,omitempty"`
-	// Payload   Payload `json:"payload,omitempty"`
+	HttpCode  int         `json:"-"`
+	Success   bool        `json:"success"`
+	Message   string      `json:"message"`
+	Error     string      `json:"error,omitempty"`
+	ErrorCode string      `json:"error_code,omitempty"`
+	Payload   interface{} `json:"payload,omitempty"`
 }
 
 type Payload struct {

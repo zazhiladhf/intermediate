@@ -1,7 +1,13 @@
 package auth
 
 import (
+	"context"
+	"log"
 	"net/http"
+	"product-catalog/config"
+	"product-catalog/pkg/database"
+	auth "product-catalog/pkg/jwt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/omeid/pgerror"
@@ -118,34 +124,162 @@ func (h authHandler) RegisterAuth(c *fiber.Ctx) (err error) {
 		return c.Status(resp.HttpCode).JSON(resp)
 	}
 	resp = Response{
-		HttpCode:  http.StatusCreated,
-		Success:   true,
-		Message:   "registration success",
-		Error:     "",
-		ErrorCode: "",
+		HttpCode: http.StatusCreated,
+		Success:  true,
+		Message:  "registration success",
+		// Error:     "",
+		// ErrorCode: "",
+		// Payload:   "",
 	}
 	return c.Status(resp.HttpCode).JSON(resp)
 }
 
-// func (a authHandler) login(c *fiber.Ctx) error {
-// 	var req login
-// 	err := c.BodyParser(&req)
-// 	if err != nil {
-// 		return WriteError(c, err)
-// 	}
+func (h authHandler) Login(c *fiber.Ctx) error {
+	var req loginRequest
+	var resp Response
 
-// 	model, err := NewAuth().FormLogin(req)
-// 	if err != nil {
-// 		return WriteError(c, err)
-// 	}
+	err := c.BodyParser(&req)
+	if err != nil {
+		resp = Response{
+			HttpCode:  http.StatusBadRequest,
+			Success:   false,
+			Message:   "bad request",
+			Error:     err.Error(),
+			ErrorCode: "400",
+			// Payload:   "",
+		}
+		return c.Status(resp.HttpCode).JSON(resp)
+	}
 
-// 	item, err := a.svc.login(c.UserContext(), model)
-// 	if err != nil {
-// 		return WriteError(c, err)
-// 	}
+	// itemAuth, err := NewAuth().ValidateFormLogin(req)
 
-// 	return WriteSuccess(c, true, "login success", http.StatusOK, item)
-// }
+	// resp = Response{
+	// 	HttpCode:  http.StatusBadRequest,
+	// 	Success:   false,
+	// 	Message:   "bad request",
+	// 	Error:     err.Error(),
+	// 	ErrorCode: "400",
+	// 	// Payload:   "",
+	// }
+	// return c.Status(resp.HttpCode).JSON(resp)
+
+	// itemAuth = Auth{
+	// 	Email:    itemAuth.Email,
+	// 	Password: itemAuth.Password,
+	// 	Role:     itemAuth.Role,
+	// }
+	// log.Println(itemAuth)
+
+	itemAuth, err := h.svc.Login(c.UserContext(), req)
+	if err != nil {
+		log.Println("error when trying to login with error:", err.Error(), req)
+		switch err {
+		case ErrEmailEmpty:
+			resp = Response{
+				HttpCode:  http.StatusBadRequest,
+				Success:   false,
+				Message:   "bad request",
+				Error:     err.Error(),
+				ErrorCode: "40001",
+			}
+		case ErrInvalidEmail:
+			resp = Response{
+				HttpCode:  http.StatusBadRequest,
+				Success:   false,
+				Message:   "bad request",
+				Error:     err.Error(),
+				ErrorCode: "40002",
+			}
+		case ErrPasswordEmpty:
+			resp = Response{
+				HttpCode:  http.StatusBadRequest,
+				Success:   false,
+				Message:   "bad request",
+				Error:     err.Error(),
+				ErrorCode: "40003",
+			}
+		case ErrInvalidPassword:
+			resp = Response{
+				HttpCode:  http.StatusBadRequest,
+				Success:   false,
+				Message:   "bad request",
+				Error:     err.Error(),
+				ErrorCode: "40004",
+			}
+		default:
+			resp = Response{
+				HttpCode:  http.StatusInternalServerError,
+				Success:   false,
+				Message:   "internal server error",
+				Error:     err.Error(),
+				ErrorCode: "50001",
+			}
+		}
+		// resp.Error = err.Error()
+		return c.Status(resp.HttpCode).JSON(resp)
+	}
+
+	token, err := auth.GenerateToken(itemAuth.Email)
+	if err != nil {
+		log.Println("error when trying to generate toker with error:", err.Error())
+	}
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	defer cancel()
+	client, err := database.ConnectRedis(config.Cfg.Redis)
+	if err != nil {
+		log.Println("error when to try migration db with error :", err.Error())
+		resp = Response{
+			HttpCode:  http.StatusInternalServerError,
+			Success:   false,
+			Message:   "internal server error",
+			Error:     err.Error(),
+			ErrorCode: "50001",
+		}
+		return c.Status(resp.HttpCode).JSON(resp)
+		// panic(err)
+	}
+
+	if client == nil {
+		log.Println("db not connected with unknown error")
+		resp = Response{
+			HttpCode:  http.StatusInternalServerError,
+			Success:   false,
+			Message:   "internal server error",
+			Error:     err.Error(),
+			ErrorCode: "999999",
+		}
+		return c.Status(resp.HttpCode).JSON(resp)
+	}
+
+	err = client.Set(ctx, itemAuth.Email, token, 5*time.Second).Err()
+	if err != nil {
+		log.Println("error when try to set data to redis with message :", err.Error())
+		resp = Response{
+			HttpCode:  http.StatusInternalServerError,
+			Success:   false,
+			Message:   "internal server error",
+			Error:     err.Error(),
+			ErrorCode: "50001",
+		}
+		return c.Status(resp.HttpCode).JSON(resp)
+	}
+
+	// resp := Response{}
+
+	resp = Response{
+		HttpCode: http.StatusOK,
+		Success:  true,
+		Message:  "login success",
+		// Error:     "",
+		// ErrorCode: "",
+		Payload: Payload{
+			AccessToken: token,
+			Role:        itemAuth.Role,
+		},
+	}
+	return c.Status(resp.HttpCode).JSON(resp)
+}
 
 // func (a authHandler) CheckEmailAvailability(c *fiber.Ctx) (err error) {
 // 	var req registerRequest
