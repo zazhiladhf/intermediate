@@ -12,10 +12,10 @@ func RegisterServiceProduct(router fiber.Router, dbSqlx *sqlx.DB) {
 	svc := NewService(repo)
 	handler := NewHandler(svc)
 
-	router.Post("/v1/products", handler.CreateProduct)
+	// router.Post("/v1/products", handler.CreateProduct)
 	router.Get("/products", handler.GetProducts)
-	router.Get("/product/:id", handler.GetProductById)
-	router.Put("/product/:id", handler.UpdateProduct)
-	router.Delete("/product/:id", handler.DeleteProduct)
+	// router.Get("/product/:id", handler.GetProductById)
+	// router.Put("/product/:id", handler.UpdateProduct)
+	// router.Delete("/product/:id", handler.DeleteProduct)
 
 }

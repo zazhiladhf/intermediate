@@ -40,15 +40,18 @@ func Migrate(db *sqlx.DB) (err error) {
 	query := `
 		CREATE TABLE IF NOT EXISTS auths (
 			id SERIAL PRIMARY KEY,
-			email varchar(100),
-			password varchar(100),
-			role varchar(100),
+			email varchar(100) NOT NULL,
+			password varchar(100) NOT NULL,
+			role varchar(100) NOT NULL,
 			UNIQUE (email)
 		);
+
+		CREATE TABLE IF NOT EXISTS categories (
+			id SERIAL PRIMARY KEY,
+			name varchar(100) NOT NULL
+		);
 	`
-	log.Println("running db migration")
 	_, err = db.Exec(query)
-	log.Println("migration done")
 
 	return
 }

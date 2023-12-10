@@ -16,26 +16,26 @@ func NewPostgresSQLXRepository(db *sqlx.DB) PostgresSQLXRepository {
 	}
 }
 
-func (p PostgresSQLXRepository) Create(ctx context.Context, model Product) (err error) {
-	query := `
-		INSERT INTO products (
-			name, category, price, stock
-		) VALUES (
-			:name, :category, :price, :stock
-		)
-	`
+// func (p PostgresSQLXRepository) Create(ctx context.Context, model Product) (err error) {
+// 	query := `
+// 		INSERT INTO products (
+// 			name, category, price, stock
+// 		) VALUES (
+// 			:name, :category, :price, :stock
+// 		)
+// 	`
 
-	stmt, err := p.db.PrepareNamed(query)
-	if err != nil {
-		return
-	}
+// 	stmt, err := p.db.PrepareNamed(query)
+// 	if err != nil {
+// 		return
+// 	}
 
-	defer stmt.Close()
+// 	defer stmt.Close()
 
-	_, err = stmt.Exec(model)
+// 	_, err = stmt.Exec(model)
 
-	return
-}
+// 	return
+// }
 
 func (p PostgresSQLXRepository) FindAll(ctx context.Context, models []Product) ([]Product, error) {
 	query := `SELECT id, name, category, price, stock FROM products`
@@ -48,49 +48,49 @@ func (p PostgresSQLXRepository) FindAll(ctx context.Context, models []Product) (
 	return models, nil
 }
 
-func (p PostgresSQLXRepository) FindByID(ctx context.Context, model Product, id int) (Product, error) {
-	query := `SELECT id, name, category, price, stock FROM products WHERE id = $1`
+// func (p PostgresSQLXRepository) FindByID(ctx context.Context, model Product, id int) (Product, error) {
+// 	query := `SELECT id, name, category, price, stock FROM products WHERE id = $1`
 
-	err := p.db.Get(&model, query, id)
-	if err != nil {
-		return model, err
-	}
+// 	err := p.db.Get(&model, query, id)
+// 	if err != nil {
+// 		return model, err
+// 	}
 
-	return model, nil
-}
+// 	return model, nil
+// }
 
-func (p PostgresSQLXRepository) Update(ctx context.Context, id int, model Product) error {
-	query := `UPDATE products SET name = :name, category = :category, price = :price, stock = :stock WHERE id = :id`
+// func (p PostgresSQLXRepository) Update(ctx context.Context, id int, model Product) error {
+// 	query := `UPDATE products SET name = :name, category = :category, price = :price, stock = :stock WHERE id = :id`
 
-	stmt, err := p.db.PrepareNamed(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+// 	stmt, err := p.db.PrepareNamed(query)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer stmt.Close()
 
-	model.Id = id
+// 	model.Id = id
 
-	_, err = stmt.Exec(model)
-	if err != nil {
-		return err
-	}
+// 	_, err = stmt.Exec(model)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return err
-}
+// 	return err
+// }
 
-func (p PostgresSQLXRepository) Delete(ctx context.Context, model Product, id int) error {
-	query := `DELETE FROM products WHERE id = $1`
+// func (p PostgresSQLXRepository) Delete(ctx context.Context, model Product, id int) error {
+// 	query := `DELETE FROM products WHERE id = $1`
 
-	stmt, err := p.db.PrepareContext(ctx, query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+// 	stmt, err := p.db.PrepareContext(ctx, query)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, id)
-	if err != nil {
-		return err
-	}
+// 	_, err = stmt.ExecContext(ctx, id)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return err
-}
+// 	return err
+// }

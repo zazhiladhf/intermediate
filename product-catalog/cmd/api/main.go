@@ -4,6 +4,7 @@ import (
 	"log"
 	"product-catalog/config"
 	"product-catalog/domain/auth"
+	"product-catalog/domain/category"
 	"product-catalog/domain/product"
 	"product-catalog/pkg/database"
 
@@ -27,12 +28,16 @@ func main() {
 		// panic(err)
 	}
 
+	log.Println("running db migration")
 	err = database.Migrate(dbSqlx)
 	if err != nil {
+		log.Println("migration failed with error:", err)
 		panic(err)
 	}
+	log.Println("migration done")
 
 	auth.Run(router, dbSqlx)
+	category.RegisterCategoriesRouter(router, dbSqlx)
 	product.RegisterServiceProduct(router, dbSqlx)
 
 	// redis(5 * time.Second)
