@@ -12,6 +12,11 @@ db:
 redis:
   host: "localhost"
   port: "6377"
-  # user: "postgres"
   password: ""
-  # name: "product-catalog"
+
+meili:
+  host: "http://localhost:7700"
+  key: "ThisIsMasterKey"
+
+jwt:
+  key: "secretKey"

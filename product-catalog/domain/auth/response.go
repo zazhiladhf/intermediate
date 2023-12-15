@@ -1,7 +1,5 @@
 package auth
 
-import "github.com/gofiber/fiber/v2"
-
 type Response struct {
 	HttpCode  int         `json:"-"`
 	Success   bool        `json:"success"`
@@ -16,18 +14,18 @@ type Payload struct {
 	Role        string `json:"role,omitempty"`
 }
 
-func ApiResponse(c *fiber.Ctx, httpCode int, success bool, message string, err string, errorCode string) (resp Response) {
-	c = c.Status(httpCode)
+// func ApiResponse(c *fiber.Ctx, httpCode int, success bool, message string, err string, errorCode string) (resp Response) {
+// 	c = c.Status(httpCode)
 
-	jsonResponse := Response{
-		HttpCode:  httpCode,
-		Success:   success,
-		Message:   message,
-		Error:     err,
-		ErrorCode: errorCode,
-	}
-	return jsonResponse
-}
+// 	jsonResponse := Response{
+// 		HttpCode:  httpCode,
+// 		Success:   success,
+// 		Message:   message,
+// 		Error:     err,
+// 		ErrorCode: errorCode,
+// 	}
+// 	return jsonResponse
+// }
 
 // func ResponseError(c *fiber.Ctx, err error) error {
 // 	switch err {

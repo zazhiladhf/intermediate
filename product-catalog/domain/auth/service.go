@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/omeid/pgerror"
@@ -23,17 +24,17 @@ type repository interface {
 // 	findByEmail(ctx context.Context, email string) (item Auth, err error)
 // }
 
-type authService struct {
+type AuthService struct {
 	repo repository
 }
 
-func newService(repo repository) authService {
-	return authService{
+func NewService(repo repository) AuthService {
+	return AuthService{
 		repo: repo,
 	}
 }
 
-func (s authService) CreateAuth(ctx context.Context, req Auth) (err error) {
+func (s AuthService) CreateAuth(ctx context.Context, req Auth) (err error) {
 	err = req.ValidateFormRegister()
 	if err != nil {
 		log.Println("error when try to validate request with error")
@@ -79,7 +80,7 @@ func (s authService) CreateAuth(ctx context.Context, req Auth) (err error) {
 	return
 }
 
-func (s authService) Login(ctx context.Context, req loginRequest) (item Auth, err error) {
+func (s AuthService) Login(ctx context.Context, req loginRequest) (item Auth, err error) {
 	email := req.Email
 	password := req.Password
 
@@ -117,44 +118,15 @@ func (s authService) Login(ctx context.Context, req loginRequest) (item Auth, er
 
 }
 
-// func (a authService) isEmailAvailable(ctx context.Context, req registerRequest) (bool, error) {
-// 	// var req registerRequest
-// 	email := req.Email
+func (s AuthService) GetAuthByEmail(ctx context.Context, email string) (auth Auth, err error) {
+	auth, err = s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return auth, err
+	}
 
-// 	auth, err := a.repo.findByEmail(ctx, email)
-// 	if err != nil {
-// 		log.Println("auth:", auth)
-// 		log.Println("error sql:", err)
-// 		return true, err
-// 	}
+	if auth.Id == 0 {
+		return auth, errors.New("no auth found on with that email")
+	}
 
-// 	if auth.Id == 0 {
-// 		log.Println("error error id == 0:", err)
-
-// 		return false, nil
-// 	}
-
-// 	// if auth.Email == req.Email {
-// 	// 	log.Println("error email sama:", err)
-
-// 	// 	return false, err
-// 	// }
-
-// 	return false, nil
-// }
-
-// func (a authService) CreateAuth() {
-// 	// check to database
-// 	isExists, err := a.repo.IsEmailAlreadyExists(req.Email)
-// 	if err != nil {
-// 		if err != sql.ErrNoRows {
-// 			return ErrorRepository
-// 		}
-// 	}
-
-// 	if isExists {
-// 		return ErrorDuplicateEntry
-// 	}
-
-// 	// insert into auth
-// }
+	return auth, nil
+}

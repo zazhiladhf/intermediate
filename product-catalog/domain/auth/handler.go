@@ -13,17 +13,17 @@ import (
 	"github.com/omeid/pgerror"
 )
 
-type authHandler struct {
-	svc authService
+type AuthHandler struct {
+	svc AuthService
 }
 
-func newHandler(svc authService) authHandler {
-	return authHandler{
+func newHandler(svc AuthService) AuthHandler {
+	return AuthHandler{
 		svc: svc,
 	}
 }
 
-func (h authHandler) RegisterAuth(c *fiber.Ctx) (err error) {
+func (h AuthHandler) RegisterAuth(c *fiber.Ctx) (err error) {
 	var req registerRequest
 
 	err = c.BodyParser(&req)
@@ -134,7 +134,7 @@ func (h authHandler) RegisterAuth(c *fiber.Ctx) (err error) {
 	return c.Status(resp.HttpCode).JSON(resp)
 }
 
-func (h authHandler) Login(c *fiber.Ctx) error {
+func (h AuthHandler) Login(c *fiber.Ctx) error {
 	var req loginRequest
 	var resp Response
 
@@ -219,12 +219,12 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 		return c.Status(resp.HttpCode).JSON(resp)
 	}
 
-	token, err := auth.GenerateToken(itemAuth.Email)
+	token, err := auth.GenerateNewAccessToken()
 	if err != nil {
 		log.Println("error when trying to generate toker with error:", err.Error())
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(24*time.Hour))
 	defer cancel()
 	client, err := database.ConnectRedis(config.Cfg.Redis)
 	if err != nil {
@@ -252,7 +252,7 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 		return c.Status(resp.HttpCode).JSON(resp)
 	}
 
-	err = client.Set(ctx, itemAuth.Email, token, 5*time.Second).Err()
+	err = client.Set(ctx, itemAuth.Email, token, 24*time.Hour).Err()
 	if err != nil {
 		log.Println("error when try to set data to redis with message :", err.Error())
 		resp = Response{
@@ -281,7 +281,7 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 	return c.Status(resp.HttpCode).JSON(resp)
 }
 
-// func (a authHandler) CheckEmailAvailability(c *fiber.Ctx) (err error) {
+// func (a AuthHandler) CheckEmailAvailability(c *fiber.Ctx) (err error) {
 // 	var req registerRequest
 
 // 	err = c.BodyParser(&req)

@@ -7,7 +7,7 @@ import (
 
 func Run(router fiber.Router, db *sqlx.DB) {
 	repo := NewPostgreSqlxRepository(db)
-	svc := newService(repo)
+	svc := NewService(repo)
 	handler := newHandler(svc)
 
 	v1 := router.Group("v1")

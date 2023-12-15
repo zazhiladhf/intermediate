@@ -50,6 +50,16 @@ func Migrate(db *sqlx.DB) (err error) {
 			id SERIAL PRIMARY KEY,
 			name varchar(100) NOT NULL
 		);
+
+		CREATE TABLE IF NOT EXISTS products (
+			id SERIAL PRIMARY KEY,
+			name varchar(100) NOT NULL,
+			stock int NOT NULL,
+			price int NOT NULL,
+			category_id varchar(100) NOT NULL,
+			image_url varchar(100) NOT NULL,
+			auth_id int 
+		);
 	`
 	_, err = db.Exec(query)
 

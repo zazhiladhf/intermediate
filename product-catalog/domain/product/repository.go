@@ -16,37 +16,38 @@ func NewPostgresSQLXRepository(db *sqlx.DB) PostgresSQLXRepository {
 	}
 }
 
-// func (p PostgresSQLXRepository) Create(ctx context.Context, model Product) (err error) {
-// 	query := `
-// 		INSERT INTO products (
-// 			name, category, price, stock
-// 		) VALUES (
-// 			:name, :category, :price, :stock
-// 		)
-// 	`
+func (r PostgresSQLXRepository) InsertProduct(ctx context.Context, model Product) (id int, err error) {
+	query := `
+		INSERT INTO products (
+			name, image_url, stock, price, category_id
+		) VALUES (
+			:name, :image_url, :stock, :price, :category_id
+		)
+		RETURNING id
+	`
 
-// 	stmt, err := p.db.PrepareNamed(query)
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	defer stmt.Close()
-
-// 	_, err = stmt.Exec(model)
-
-// 	return
-// }
-
-func (p PostgresSQLXRepository) FindAll(ctx context.Context, models []Product) ([]Product, error) {
-	query := `SELECT id, name, category, price, stock FROM products`
-
-	err := p.db.Select(&models, query)
+	stmt, err := r.db.PrepareNamedContext(ctx, query)
 	if err != nil {
-		return models, err
+		return
 	}
 
-	return models, nil
+	defer stmt.Close()
+
+	err = stmt.GetContext(ctx, &id, model)
+
+	return
 }
+
+// func (r PostgresSQLXRepository) FindAll(ctx context.Context, models []Product) ([]Product, error) {
+// 	query := `SELECT id, name, category, price, stock FROM products`
+
+// 	err := r.db.Select(&models, query)
+// 	if err != nil {
+// 		return models, err
+// 	}
+
+// 	return models, nil
+// }
 
 // func (p PostgresSQLXRepository) FindByID(ctx context.Context, model Product, id int) (Product, error) {
 // 	query := `SELECT id, name, category, price, stock FROM products WHERE id = $1`

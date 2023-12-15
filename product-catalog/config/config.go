@@ -10,6 +10,8 @@ type Config struct {
 	App   App   `yaml:"app"`
 	DB    DB    `yaml:"db"`
 	Redis Redis `yaml:"redis"`
+	Meili Meili `yaml:"meili"`
+	JWT   JWT   `yaml:"jwt"`
 }
 
 type App struct {
@@ -29,6 +31,15 @@ type Redis struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 	Password string `yaml:"password"`
+}
+
+type Meili struct {
+	Host   string `yaml:"host"`
+	ApiKey string `yaml:"key"`
+}
+
+type JWT struct {
+	SecretKey string `yaml:"key"`
 }
 
 var Cfg *Config
