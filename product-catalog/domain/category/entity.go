@@ -1,6 +1,6 @@
 package category
 
-type category struct {
-	Id   int    `json:"id" db:"id"`
-	Name string `json:"name" db:"name"`
+type Category struct {
+	Id   int    `db:"id"`
+	Name string `db:"name"`
 }

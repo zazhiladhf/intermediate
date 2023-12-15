@@ -5,7 +5,6 @@ go 1.21.1
 require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber/v2 v2.51.0
-	github.com/gofiber/jwt/v2 v2.2.7
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9

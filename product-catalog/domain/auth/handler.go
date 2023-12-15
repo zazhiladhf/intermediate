@@ -171,6 +171,8 @@ func (h AuthHandler) Login(c *fiber.Ctx) error {
 	// log.Println(itemAuth)
 
 	itemAuth, err := h.svc.Login(c.UserContext(), req)
+	// log.Println("item auth by handler:", itemAuth)
+
 	if err != nil {
 		log.Println("error when trying to login with error:", err.Error(), req)
 		switch err {
@@ -219,7 +221,8 @@ func (h AuthHandler) Login(c *fiber.Ctx) error {
 		return c.Status(resp.HttpCode).JSON(resp)
 	}
 
-	token, err := auth.GenerateNewAccessToken()
+	token, err := auth.GenerateToken(itemAuth.Email)
+	log.Println("item auth:", itemAuth.Email)
 	if err != nil {
 		log.Println("error when trying to generate toker with error:", err.Error())
 	}

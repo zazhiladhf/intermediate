@@ -58,7 +58,7 @@ func Migrate(db *sqlx.DB) (err error) {
 			price int NOT NULL,
 			category_id varchar(100) NOT NULL,
 			image_url varchar(100) NOT NULL,
-			auth_id int 
+			email_auth varchar(100) 
 		);
 	`
 	_, err = db.Exec(query)

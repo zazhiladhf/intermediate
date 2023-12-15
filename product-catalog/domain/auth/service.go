@@ -9,7 +9,7 @@ import (
 	"github.com/omeid/pgerror"
 )
 
-type repository interface {
+type Repository interface {
 	Save(ctx context.Context, auth Auth) (err error)
 	FindByEmail(ctx context.Context, email string) (auth Auth, err error)
 	IsEmailAlreadyExists(ctx context.Context, email string) (bool, error)
@@ -25,10 +25,10 @@ type repository interface {
 // }
 
 type AuthService struct {
-	repo repository
+	repo Repository
 }
 
-func NewService(repo repository) AuthService {
+func NewService(repo Repository) AuthService {
 	return AuthService{
 		repo: repo,
 	}
@@ -91,6 +91,7 @@ func (s AuthService) Login(ctx context.Context, req loginRequest) (item Auth, er
 	}
 
 	itemAuth, err = s.repo.FindByEmail(ctx, email)
+	// log.Println("item auth by service", itemAuth)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Println("error when try to findbyemail with error", err.Error(), itemAuth)
@@ -114,7 +115,7 @@ func (s AuthService) Login(ctx context.Context, req loginRequest) (item Auth, er
 		return itemAuth, ErrInternalServer
 	}
 
-	return
+	return itemAuth, err
 
 }
 

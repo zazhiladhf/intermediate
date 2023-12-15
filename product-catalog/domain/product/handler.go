@@ -1,9 +1,8 @@
 package product
 
 import (
+	"log"
 	"net/http"
-	"product-catalog/pkg/jwt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,34 +18,46 @@ func NewHandler(svc Service) productHandler {
 }
 
 func (h productHandler) CreateProduct(c *fiber.Ctx) error {
-	// Get now time.
-	now := time.Now().Unix()
+	// // Get now time.
+	// now := time.Now().Unix()
 
-	// Get claims from JWT.
-	claims, err := jwt.ExtractTokenMetadata(c)
-	if err != nil {
-		// Return status 500 and JWT parse error.
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+	// // Get claims from JWT.
+	// claims, err := jwt.ExtractTokenMetadata(c)
+	// if err != nil {
+	// 	// Return status 500 and JWT parse error.
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   err.Error(),
+	// 	})
+	// }
 
-	// Set expiration time from JWT data of current book.
-	expires := claims.Expires
+	// // Set expiration time from JWT data of current book.
+	// expires := claims.Expires
 
-	// Checking, if now time greater than expiration from JWT.
-	if now > expires {
-		// Return status 401 and unauthorized error message.
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": true,
-			"msg":   "unauthorized, check expiration time of your token",
-		})
-	}
+	// // Checking, if now time greater than expiration from JWT.
+	// if now > expires {
+	// 	// Return status 401 and unauthorized error message.
+	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+	// 		"error": true,
+	// 		"msg":   "unauthorized, check expiration time of your token",
+	// 	})
+	// }
+
+	// var resp = auth.Auth{}
+
+	// claims, err := jwt.ExtractTokenMetadata(c)
+	// if err != nil {
+	// 	return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
+
+	// resp.Email = claims.Email
 
 	var req = CreateProductRequest{}
+	email := c.Locals("email").(string)
 
-	err = c.BodyParser(&req)
+	err := c.BodyParser(&req)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -54,6 +65,11 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
+	// if resp.Email != req.Auth.Email {
+	// 	log.Println("token tidak valid")
+	// 	return err
+	// }
 
 	// currentAuth := c.GetReqHeaders().(auth.Auth)
 	// req.Auth = currentAuth
@@ -101,7 +117,9 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 	// 	})
 	// }
 
-	err = h.svc.createProduct(c.UserContext(), req)
+	err = h.svc.createProduct(c.UserContext(), req, email)
+	log.Println(req)
+
 	if err != nil {
 		var payload fiber.Map
 		httpCode := 400
@@ -130,39 +148,49 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 	})
 }
 
-// func (h Handler) GetProducts(c *fiber.Ctx) error {
-// 	var models []Product
-// 	products, err := h.svc.GetProducts(c.UserContext(), models)
+func (h productHandler) GetProducts(c *fiber.Ctx) error {
+	// var models []Product
+	listProducts, err := h.svc.GetProducts(c.UserContext())
 
-// 	if err != nil {
-// 		var payload fiber.Map
-// 		httpCode := 404
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success":    false,
+			"message":    "internal server error",
+			"error":      err.Error(),
+			"error_code": "50001",
+			// "payload": listCategories,
+		})
+	}
 
-// 		switch err {
-// 		case ErrNotFound:
-// 			payload = fiber.Map{
-// 				"success": false,
-// 				"message": "ERR NOT FOUND",
-// 				"error":   err.Error(),
-// 			}
-// 			httpCode = http.StatusNotFound
-// 		default:
-// 			payload = fiber.Map{
-// 				"success": false,
-// 				"message": "ERR INTERNAL",
-// 				"error":   err.Error(),
-// 			}
-// 			httpCode = http.StatusInternalServerError
-// 		}
-// 		return c.Status(httpCode).JSON(payload)
-// 	}
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "GET ALL SUCCESS",
+		"payload": listProducts,
+	})
+}
 
-// 	return c.Status(http.StatusOK).JSON(fiber.Map{
-// 		"success": true,
-// 		"message": "GET ALL SUCCESS",
-// 		"payload": products,
-// 	})
-// }
+func (h productHandler) GetProductsByEmail(c *fiber.Ctx) error {
+	queryParam := c.Query("query")
+	email := c.Locals("email").(string)
+	// var models []Product
+	listProducts, err := h.svc.GetProductsByEmail(c.UserContext(), queryParam, email)
+
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success":    false,
+			"message":    "internal server error",
+			"error":      err.Error(),
+			"error_code": "50001",
+			// "payload": listCategories,
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "GET ALL SUCCESS",
+		"payload": listProducts,
+	})
+}
 
 // func (h Handler) GetProductById(c *fiber.Ctx) error {
 // 	model := Product{}

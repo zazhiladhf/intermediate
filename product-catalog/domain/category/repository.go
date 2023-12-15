@@ -22,7 +22,7 @@ func NewPostgreSqlxRepository(db *sqlx.DB) PostgreSqlxRepository {
 	}
 }
 
-func (p PostgreSqlxRepository) FindAll(ctx context.Context) (items []category, err error) {
+func (p PostgreSqlxRepository) FindAll(ctx context.Context) (items []Category, err error) {
 	query := `
     	SELECT 
 			id, name 

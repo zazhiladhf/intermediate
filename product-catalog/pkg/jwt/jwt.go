@@ -20,7 +20,8 @@ import (
 // var Jwt *JwtService
 
 var secret = []byte("secret")
-var exp = 15
+
+// var exp = 120
 
 // func NewService() *JwtService {
 // 	return &JwtService{}
@@ -28,53 +29,54 @@ var exp = 15
 
 // TokenMetadata struct to describe metadata in JWT.
 type TokenMetadata struct {
-	// Email   string
+	Email   string
 	Expires int64
 }
 
-// func GenerateToken(email string) (string, error) {
-// 	claims := jwt.MapClaims{
-// 		"email": email,
-// 		"exp":   jwt.NewNumericDate(time.Now().Add(24 * time.Hour)).Unix(),
-// 	}
-// 	// claim["user_id"] = email
+func GenerateToken(email string) (string, error) {
+	claims := jwt.MapClaims{
+		"email": email,
+		"exp":   jwt.NewNumericDate(time.Now().Add(24 * time.Hour)).Unix(),
+	}
+	// claim["user_id"] = email
 
-// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-// 	signedToken, err := token.SignedString(secret)
-// 	if err != nil {
-// 		return signedToken, err
-// 	}
-
-// 	return signedToken, nil
-// }
-
-// GenerateNewAccessToken func for generate a new Access token.
-func GenerateNewAccessToken() (string, error) {
-	// Set secret key from .env file.
-	// secret := os.Getenv("JWT_SECRET_KEY")
-
-	// Set expires minutes count for secret key from .env file.
-	minutesCount := exp
-
-	// Create a new claims.
-	claims := jwt.MapClaims{}
-
-	// Set public claims:
-	claims["exp"] = time.Now().Add(time.Minute * time.Duration(minutesCount)).Unix()
-
-	// Create a new JWT access token with claims.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Generate token.
-	t, err := token.SignedString(secret)
+	signedToken, err := token.SignedString(secret)
 	if err != nil {
-		// Return error, it JWT token generation failed.
-		return "", err
+		return signedToken, err
 	}
 
-	return t, nil
+	return signedToken, nil
 }
+
+// // GenerateNewAccessToken func for generate a new Access token.
+// func GenerateNewAccessToken(email string) (string, error) {
+// 	// Set secret key from .env file.
+// 	// secret := os.Getenv("JWT_SECRET_KEY")
+
+// 	// Set expires minutes count for secret key from .env file.
+// 	minutesCount := exp
+
+// 	// Create a new claims.
+// 	claims := jwt.MapClaims{}
+
+// 	// Set public claims:
+// 	claims["exp"] = time.Now().Add(time.Minute * time.Duration(minutesCount)).Unix()
+// 	claims["email"] = email
+
+// 	// Create a new JWT access token with claims.
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+// 	// Generate token.
+// 	t, err := token.SignedString(secret)
+// 	if err != nil {
+// 		// Return error, it JWT token generation failed.
+// 		return "", err
+// 	}
+
+// 	return t, nil
+// }
 
 // func ValidateToken(encodedToken string) (jwt.MapClaims, error) {
 // 	token, err := jwt.Parse(encodedToken, func(token *jwt.Token) (interface{}, error) {
@@ -111,11 +113,11 @@ func ExtractTokenMetadata(c *fiber.Ctx) (*TokenMetadata, error) {
 	if ok && token.Valid {
 		// Expires time.
 		expires := int64(claims["exp"].(float64))
-		// claims["email"] = email
+		email := claims["email"].(string)
 
 		return &TokenMetadata{
 			Expires: expires,
-			// Email:   email,
+			Email:   email,
 		}, nil
 	}
 

@@ -15,35 +15,17 @@ var (
 	ErrDuplicateEmail  = errors.New("email already used")
 	ErrRepository      = errors.New("error repository")
 	ErrInternalServer  = errors.New("unknown error")
-
-	// ErrCodeEmailEmpty      = errorCodeBadRequest("01")
-	// ErrCodeInvalidEmail    = errorCodeBadRequest("02")
-	// ErrCodePasswordEmpty   = errorCodeBadRequest("03")
-	// ErrCodeInvalidPassword = errorCodeBadRequest("04")
-	// ErrCodeDuplicateEmail  = errorCodeConflict("01")
-	// ErrCodeRepository      = errorCodeInternalServer("01")
-	// ErrCodeInternalServer  = "99999"
 )
 
 type Auth struct {
-	Id       int    `json:"id" db:"id"`
-	Email    string `json:"email" db:"email" validate:"required,email"`
-	Password string `json:"password" db:"password" validate:"required"`
-	Role     string `json:"role" db:"role" validate:"required"`
+	Id       int    `db:"id"`
+	Email    string `db:"email"`
+	Password string `db:"password"`
+	Role     string `db:"role"`
 }
 
 func NewAuth() Auth {
 	return Auth{}
-}
-
-func (a *Auth) EncryptPassword() (err error) {
-	encrypted, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return
-	}
-
-	a.Password = string(encrypted)
-	return
 }
 
 func (a Auth) ValidateFormRegister() (err error) {
@@ -115,6 +97,16 @@ func (a Auth) ValidateFormLogin(req loginRequest) (Auth, error) {
 	a.Email = req.Email
 	a.Password = req.Password
 	return a, nil
+}
+
+func (a *Auth) EncryptPassword() (err error) {
+	encrypted, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return
+	}
+
+	a.Password = string(encrypted)
+	return
 }
 
 func (a Auth) ValidatePassword(plainText string) (ok bool, err error) {

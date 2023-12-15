@@ -2,8 +2,15 @@ package product
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
+)
+
+var (
+	ErrCategoriesNotFound = errors.New("categories not found")
 )
 
 type PostgresSQLXRepository struct {
@@ -19,9 +26,9 @@ func NewPostgresSQLXRepository(db *sqlx.DB) PostgresSQLXRepository {
 func (r PostgresSQLXRepository) InsertProduct(ctx context.Context, model Product) (id int, err error) {
 	query := `
 		INSERT INTO products (
-			name, image_url, stock, price, category_id
+			name, image_url, stock, price, category_id, email_auth
 		) VALUES (
-			:name, :image_url, :stock, :price, :category_id
+			:name, :image_url, :stock, :price, :category_id, :email_auth
 		)
 		RETURNING id
 	`
@@ -38,27 +45,54 @@ func (r PostgresSQLXRepository) InsertProduct(ctx context.Context, model Product
 	return
 }
 
-// func (r PostgresSQLXRepository) FindAll(ctx context.Context, models []Product) ([]Product, error) {
-// 	query := `SELECT id, name, category, price, stock FROM products`
+func (r PostgresSQLXRepository) FindAll(ctx context.Context) (list []Product, err error) {
+	query := `
+		SELECT 
+			id, name, image_url, stock, price, category_id, email_auth
+		FROM products
+	`
 
-// 	err := r.db.Select(&models, query)
-// 	if err != nil {
-// 		return models, err
-// 	}
+	err = r.db.SelectContext(ctx, &list, query)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrCategoriesNotFound
+		}
+		return
+	}
 
-// 	return models, nil
-// }
+	if len(list) == 0 {
+		return nil, ErrCategoriesNotFound
+	}
 
-// func (p PostgresSQLXRepository) FindByID(ctx context.Context, model Product, id int) (Product, error) {
-// 	query := `SELECT id, name, category, price, stock FROM products WHERE id = $1`
+	return list, nil
+}
 
-// 	err := p.db.Get(&model, query, id)
-// 	if err != nil {
-// 		return model, err
-// 	}
+func (p PostgresSQLXRepository) FindByEmail(ctx context.Context, queryParam string, email string) (list []Product, err error) {
+	filter := mappingQueryFilter(queryParam)
 
-// 	return model, nil
-// }
+	queryByEmail := `
+		SELECT 
+		id, name, image_url, stock, price, category_id, email_auth 
+		FROM products 
+		WHERE email_auth = $1
+	`
+
+	query := fmt.Sprintf("%s %s", queryByEmail, filter)
+
+	err = p.db.SelectContext(ctx, &list, query, email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return []Product{}, ErrCategoriesNotFound
+		}
+		return
+	}
+
+	if len(list) == 0 {
+		return nil, ErrCategoriesNotFound
+	}
+
+	return list, nil
+}
 
 // func (p PostgresSQLXRepository) Update(ctx context.Context, id int, model Product) error {
 // 	query := `UPDATE products SET name = :name, category = :category, price = :price, stock = :stock WHERE id = :id`
@@ -95,3 +129,13 @@ func (r PostgresSQLXRepository) InsertProduct(ctx context.Context, model Product
 
 // 	return err
 // }
+
+func mappingQueryFilter(queryParam string) string {
+	filter := ""
+
+	if queryParam != "" {
+		filter = fmt.Sprintf("%s AND name ILIKE '%%%s%%'", filter, queryParam)
+	}
+
+	return filter
+}

@@ -1,6 +1,8 @@
 package product
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrEmptyName       = errors.New("name is required")
@@ -18,7 +20,7 @@ type Product struct {
 	Price      int    `json:"price" db:"price"`
 	CategoryId int    `json:"category_id" db:"category_id"`
 	ImageURL   string `json:"image_url" db:"image_url"`
-	// AuthId     int
+	AuthEmail  string `db:"email_auth"`
 }
 
 func newFromRequest(req CreateProductRequest) (product Product, err error) {
@@ -28,6 +30,7 @@ func newFromRequest(req CreateProductRequest) (product Product, err error) {
 		Stock:      req.Stock,
 		Price:      req.Price,
 		CategoryId: req.CategoryId,
+		AuthEmail:  req.Auth.Email,
 	}
 
 	err = product.validateRequestProduct()
@@ -60,4 +63,16 @@ func (p Product) validateRequestProduct() (err error) {
 	}
 
 	return
+}
+
+type ProductAuth struct {
+	AuthId     int    `db:"auth_id"`
+	ProductId  int    `db:"product_id"`
+	Name       string `db:"name"`
+	Stock      int    `db:"stock"`
+	Price      int    `db:"price"`
+	CategoryId int    `db:"category_id"`
+	ImageURL   string `db:"image_url"`
+	Email      string `db:"email"`
+	Role       string `db:"role"`
 }
