@@ -5,13 +5,48 @@ import (
 	"product-catalog/config"
 	"product-catalog/domain/auth"
 	"product-catalog/domain/category"
+	"product-catalog/domain/files"
 	"product-catalog/domain/product"
 	"product-catalog/pkg/database"
+	"product-catalog/pkg/images"
 	"product-catalog/pkg/middleware"
 	"product-catalog/pkg/search"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+// type CloudSvc interface {
+// 	Upload(ctx context.Context, file interface{}, pathDestination string, quality string) (uri string, err error)
+// }
+
+// // setup services
+// type service struct {
+// 	// disini kita akan menggunakan kontrak ke cloud providernya
+// 	cloud CloudSvc
+// }
+
+// var path = "public/uploads"
+// var svc = service{}
+
+// func init() {
+// 	err := config.LoadConfig("./config/config.yaml")
+// 	if err != nil {
+// 		log.Println("error when try to LoadConfig with error :", err.Error())
+// 	}
+
+// 	cloudName := config.Cfg.Cloudinary.Name
+// 	apiKey := config.Cfg.Cloudinary.ApiKey
+// 	apiSecret := config.Cfg.Cloudinary.ApiSecret
+
+// 	cloudClient, err := images.NewCloudinary(cloudName, apiKey, apiSecret)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	svc = service{
+// 		cloud: cloudClient,
+// 	}
+// }
 
 func main() {
 	err := config.LoadConfig("./config/config.yaml")
@@ -49,7 +84,15 @@ func main() {
 	category.RegisterCategoriesRouter(router, dbSqlx)
 	product.RegisterServiceProduct(router, dbSqlx, client)
 
-	// redis(5 * time.Second)
+	cloudName := config.Cfg.Cloudinary.Name
+	apiKey := config.Cfg.Cloudinary.ApiKey
+	apiSecret := config.Cfg.Cloudinary.ApiSecret
+
+	cloudClient, err := images.NewCloudinary(cloudName, apiKey, apiSecret)
+	if err != nil {
+		panic(err)
+	}
+	files.RegisterRouteFiles(router, cloudClient, cloudName, apiKey, apiSecret)
 
 	router.Listen(config.Cfg.App.Port)
 }

@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	App   App   `yaml:"app"`
-	DB    DB    `yaml:"db"`
-	Redis Redis `yaml:"redis"`
-	Meili Meili `yaml:"meili"`
-	JWT   JWT   `yaml:"jwt"`
+	App        App        `yaml:"app"`
+	DB         DB         `yaml:"db"`
+	Redis      Redis      `yaml:"redis"`
+	Meili      Meili      `yaml:"meili"`
+	JWT        JWT        `yaml:"jwt"`
+	Cloudinary Cloudinary `yaml:"cloudinary"`
 }
 
 type App struct {
@@ -40,6 +41,12 @@ type Meili struct {
 
 type JWT struct {
 	SecretKey string `yaml:"key"`
+}
+
+type Cloudinary struct {
+	Name      string `yaml:"name"`
+	ApiKey    string `yaml:"apiKey"`
+	ApiSecret string `yaml:"apiSecret"`
 }
 
 var Cfg *Config

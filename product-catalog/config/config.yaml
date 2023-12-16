@@ -20,3 +20,8 @@ meili:
 
 jwt:
   key: "secretKey"
+
+cloudinary:
+  name: "zazhil-cloudinary"
+  apiKey: "914726226983175"
+  apiSecret: "cPSCFEY3kzElZNlOjXqwtdP8-6M"
