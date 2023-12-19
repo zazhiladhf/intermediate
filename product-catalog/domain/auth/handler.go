@@ -1,312 +1,82 @@
 package auth
 
 import (
-	"context"
 	"log"
 	"net/http"
-	"product-catalog/config"
-	"product-catalog/pkg/database"
-	auth "product-catalog/pkg/jwt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/omeid/pgerror"
+	"github.com/lib/pq"
 )
 
 type AuthHandler struct {
 	svc AuthService
 }
 
-func newHandler(svc AuthService) AuthHandler {
+func NewHandler(svc AuthService) AuthHandler {
 	return AuthHandler{
 		svc: svc,
 	}
 }
 
-func (h AuthHandler) RegisterAuth(c *fiber.Ctx) (err error) {
+func (h AuthHandler) Register(c *fiber.Ctx) (err error) {
 	var req registerRequest
 
 	err = c.BodyParser(&req)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "ERR BAD REQUEST body parser",
-			"error":   err.Error(),
-		})
+		log.Println("error when try to parsing body request with error", err)
+		return ResponseError(c, err)
 	}
 
-	model := Auth{
-		Email:    req.Email,
-		Password: req.Password,
-		Role:     "merchant",
-	}
-
-	// model, err := NewAuth().ValidateFormRegister(req)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return ResponseError(c, err)
-	// }
-
-	// isEmailAvailable, err := a.svc.isEmailAvailable(c.UserContext(), req)
-	// if err != nil {
-	// 	log.Println("err is available:", err)
-	// 	log.Println("is available:", isEmailAvailable)
-	// 	return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-	// 		"success": false,
-	// 		"message": "ERR BAD REQUEST",
-	// 		"error":   err.Error(),
-	// 	})
-	// }
-
-	// if !isEmailAvailable {
-	// 	return c.Status(http.StatusConflict).JSON(fiber.Map{
-	// 		"success": false,
-	// 		"message": "duplicate email",
-	// 		"error":   err.Error(),
-	// 	})
-	// }
-
-	resp := Response{}
-
-	err = h.svc.CreateAuth(c.UserContext(), model)
+	model, err := NewAuth().ValidateFormRegister(req)
 	if err != nil {
-		switch {
-		case err == ErrEmailEmpty:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40001",
+		log.Println("error when try to validate form register with error", err)
+		return ResponseError(c, err)
+	}
+
+	err = h.svc.RegisterAuth(c.UserContext(), model)
+	if err != nil {
+		log.Println("error when try to register with error", err)
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code {
+			case "23505":
+				return ResponseError(c, ErrDuplicateEmail)
+			default:
+				return ResponseError(c, ErrRepository)
 			}
-		case err == ErrInvalidEmail:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40002",
-			}
-		case err == ErrPasswordEmpty:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40003",
-			}
-		case err == ErrInvalidPassword:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40004",
-			}
-		case pgerror.UniqueViolation(err) != nil:
-			resp = Response{
-				HttpCode:  http.StatusConflict,
-				Success:   false,
-				Message:   "duplicate",
-				Error:     err.Error(),
-				ErrorCode: "40901",
-			}
-		default:
-			resp = Response{
-				HttpCode:  http.StatusInternalServerError,
-				Success:   false,
-				Message:   "internal server error",
-				Error:     err.Error(),
-				ErrorCode: "50001",
-			}
+		} else {
+			log.Println("unknown error with error:", err)
 		}
-		resp.Error = err.Error()
-		return c.Status(resp.HttpCode).JSON(resp)
+
+		return ResponseError(c, err)
 	}
-	resp = Response{
-		HttpCode: http.StatusCreated,
-		Success:  true,
-		Message:  "registration success",
-		// Error:     "",
-		// ErrorCode: "",
-		// Payload:   "",
-	}
-	return c.Status(resp.HttpCode).JSON(resp)
+
+	return ResponseSuccess(c, true, "registration success", http.StatusCreated, nil)
 }
 
 func (h AuthHandler) Login(c *fiber.Ctx) error {
 	var req loginRequest
-	var resp Response
 
 	err := c.BodyParser(&req)
 	if err != nil {
-		resp = Response{
-			HttpCode:  http.StatusBadRequest,
-			Success:   false,
-			Message:   "bad request",
-			Error:     err.Error(),
-			ErrorCode: "400",
-			// Payload:   "",
-		}
-		return c.Status(resp.HttpCode).JSON(resp)
+		log.Println("error when try to parsing body request with error", err)
+		return ResponseError(c, err)
 	}
 
-	// itemAuth, err := NewAuth().ValidateFormLogin(req)
-
-	// resp = Response{
-	// 	HttpCode:  http.StatusBadRequest,
-	// 	Success:   false,
-	// 	Message:   "bad request",
-	// 	Error:     err.Error(),
-	// 	ErrorCode: "400",
-	// 	// Payload:   "",
-	// }
-	// return c.Status(resp.HttpCode).JSON(resp)
-
-	// itemAuth = Auth{
-	// 	Email:    itemAuth.Email,
-	// 	Password: itemAuth.Password,
-	// 	Role:     itemAuth.Role,
-	// }
-	// log.Println(itemAuth)
-
-	itemAuth, err := h.svc.Login(c.UserContext(), req)
-	// log.Println("item auth by handler:", itemAuth)
-
+	model, err := NewAuth().ValidateFormLogin(req)
 	if err != nil {
-		log.Println("error when trying to login with error:", err.Error(), req)
-		switch err {
-		case ErrEmailEmpty:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40001",
-			}
-		case ErrInvalidEmail:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40002",
-			}
-		case ErrPasswordEmpty:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40003",
-			}
-		case ErrInvalidPassword:
-			resp = Response{
-				HttpCode:  http.StatusBadRequest,
-				Success:   false,
-				Message:   "bad request",
-				Error:     err.Error(),
-				ErrorCode: "40004",
-			}
-		default:
-			resp = Response{
-				HttpCode:  http.StatusInternalServerError,
-				Success:   false,
-				Message:   "internal server error",
-				Error:     err.Error(),
-				ErrorCode: "50001",
-			}
-		}
-		// resp.Error = err.Error()
-		return c.Status(resp.HttpCode).JSON(resp)
+		log.Println("error when try to validate form login with error", err)
+		return ResponseError(c, err)
 	}
 
-	token, err := auth.GenerateToken(itemAuth.Email)
-	log.Println("item auth:", itemAuth.Email)
+	itemAuth, token, err := h.svc.Login(c.UserContext(), model)
 	if err != nil {
-		log.Println("error when trying to generate toker with error:", err.Error())
+		log.Println("error when try to login with error", err)
+		return ResponseError(c, err)
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(24*time.Hour))
-	defer cancel()
-	client, err := database.ConnectRedis(config.Cfg.Redis)
-	if err != nil {
-		log.Println("error when to try migration db with error :", err.Error())
-		resp = Response{
-			HttpCode:  http.StatusInternalServerError,
-			Success:   false,
-			Message:   "internal server error",
-			Error:     err.Error(),
-			ErrorCode: "50001",
-		}
-		return c.Status(resp.HttpCode).JSON(resp)
-		// panic(err)
-	}
-
-	if client == nil {
-		log.Println("db not connected with unknown error")
-		resp = Response{
-			HttpCode:  http.StatusInternalServerError,
-			Success:   false,
-			Message:   "internal server error",
-			Error:     err.Error(),
-			ErrorCode: "999999",
-		}
-		return c.Status(resp.HttpCode).JSON(resp)
-	}
-
-	err = client.Set(ctx, itemAuth.Email, token, 24*time.Hour).Err()
-	if err != nil {
-		log.Println("error when try to set data to redis with message :", err.Error())
-		resp = Response{
-			HttpCode:  http.StatusInternalServerError,
-			Success:   false,
-			Message:   "internal server error",
-			Error:     err.Error(),
-			ErrorCode: "50001",
-		}
-		return c.Status(resp.HttpCode).JSON(resp)
-	}
-
-	// resp := Response{}
-
-	resp = Response{
-		HttpCode: http.StatusOK,
-		Success:  true,
-		Message:  "login success",
-		// Error:     "",
-		// ErrorCode: "",
-		Payload: Payload{
-			AccessToken: token,
-			Role:        itemAuth.Role,
-		},
-	}
-	return c.Status(resp.HttpCode).JSON(resp)
+	return ResponseSuccess(c, true, "login success", http.StatusOK, Payload{
+		AccessToken: token,
+		Role:        itemAuth.Role,
+	})
 }
-
-// func (a AuthHandler) CheckEmailAvailability(c *fiber.Ctx) (err error) {
-// 	var req registerRequest
-
-// 	err = c.BodyParser(&req)
-// 	if err != nil {
-// 		return WriteError(c, err)
-// 	}
-
-// 	isEmailAvailable, err := a.svc.isEmailAvailable(c.UserContext(), req)
-// 	if err != nil {
-// 		return WriteError(c, err)
-// 	}
-
-// 	data := gin.H{
-// 		"is_available": isEmailAvailable,
-// 	}
-
-// 	metaMessage := "Email has been registered"
-
-// 	if isEmailAvailable {
-// 		metaMessage = "Email is available"
-// 	}
-
-//		response := helper.APIResponse(metaMessage, http.StatusOK, "success", data)
-//		c.JSON(http.StatusUnprocessableEntity, response)
-//	}

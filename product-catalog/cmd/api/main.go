@@ -1,16 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"product-catalog/config"
 	"product-catalog/domain/auth"
 	"product-catalog/domain/category"
 	"product-catalog/domain/files"
-	"product-catalog/domain/product"
 	"product-catalog/pkg/database"
 	"product-catalog/pkg/images"
 	"product-catalog/pkg/middleware"
-	"product-catalog/pkg/search"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -49,11 +48,13 @@ import (
 // }
 
 func main() {
+	// setup config
 	err := config.LoadConfig("./config/config.yaml")
 	if err != nil {
 		log.Println("error when try to LoadConfig with error :", err.Error())
 	}
 
+	// setup fiber
 	router := fiber.New(fiber.Config{
 		AppName: config.Cfg.App.Name,
 		// Prefork: true,
@@ -61,17 +62,26 @@ func main() {
 
 	middleware.FiberMiddleware(router)
 
+	// setup database PostgreSQL
 	dbSqlx, err := database.ConnectPostgresSqlx(config.Cfg.DB)
 	if err != nil {
 		log.Println("error when to try migration db with error :", err.Error())
 		// panic(err)
 	}
 
-	client, err := search.ConnectMeilisearch(config.Cfg.Meili.Host, config.Cfg.Meili.ApiKey)
+	// setup redis
+	dbRedis, err := database.ConnectRedis(context.Background(), config.Cfg.Redis)
 	if err != nil {
-		log.Println("error connect meili", err)
+		log.Println("error connect redis", err)
 	}
 
+	// setup meilisearch
+	// client, err := search.ConnectMeilisearch(config.Cfg.Meili.Host, config.Cfg.Meili.ApiKey)
+	// if err != nil {
+	// 	log.Println("error connect meili", err)
+	// }
+
+	// migration db
 	log.Println("running db migration")
 	err = database.Migrate(dbSqlx)
 	if err != nil {
@@ -80,10 +90,12 @@ func main() {
 	}
 	log.Println("migration done")
 
-	auth.Run(router, dbSqlx)
+	// regoster routes
+	auth.RegisterRoutesAuth(router, dbSqlx, dbRedis)
 	category.RegisterCategoriesRouter(router, dbSqlx)
-	product.RegisterServiceProduct(router, dbSqlx, client)
+	// product.RegisterServiceProduct(router, dbSqlx, client)
 
+	// setup cloudinary
 	cloudName := config.Cfg.Cloudinary.Name
 	apiKey := config.Cfg.Cloudinary.ApiKey
 	apiSecret := config.Cfg.Cloudinary.ApiSecret
@@ -94,5 +106,6 @@ func main() {
 	}
 	files.RegisterRouteFiles(router, cloudClient, cloudName, apiKey, apiSecret)
 
+	// listen app
 	router.Listen(config.Cfg.App.Port)
 }

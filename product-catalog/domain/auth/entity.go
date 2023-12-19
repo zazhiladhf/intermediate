@@ -28,53 +28,27 @@ func NewAuth() Auth {
 	return Auth{}
 }
 
-func (a Auth) ValidateFormRegister() (err error) {
-	if a.Email == "" {
-		return ErrEmailEmpty
+func (a Auth) ValidateFormRegister(req registerRequest) (Auth, error) {
+	if req.Email == "" {
+		return a, ErrEmailEmpty
 	}
 
-	if !valid(a.Email) {
-		return ErrInvalidEmail
+	if !valid(req.Email) {
+		return a, ErrInvalidEmail
 	}
 
-	if a.Password == "" {
-		return ErrPasswordEmpty
+	if req.Password == "" {
+		return a, ErrPasswordEmpty
 	}
 
-	if len(a.Password) < 6 {
-		return ErrInvalidPassword
+	if len(req.Password) < 6 {
+		return a, ErrInvalidPassword
 	}
 
-	// if err != nil && errors.Is(err, UniqueViolationErr) {
-	// 	return ErrDuplicateEmail
-	// }
-
-	// if err.Error() == "email already used" {
-	// 	return ErrDuplicateEmail
-	// }
-
-	// if a.Email == a.Email {
-	// 	return ErrDuplicateEmail
-	// }
-
-	// if e := pgerror.UniqueViolation(err); e != nil {
-	// 	// you can use e here to check the fields et al
-	// 	return ErrDuplicateEmail
-	// }
-
-	// if err != nil && pgerror.UniqueViolation(err) != nil {
-	// 	return ErrDuplicateEmail
-	// }
-
-	// var duplicateEntryError = &pgconn.PgError{Code: "23505"}
-	// if errors.As(err, &duplicateEntryError) {
-	// 	return ErrDuplicateEmail
-	// }
-
-	// a.Email = req.Email
-	// a.Password = req.Password
-	// a.Role = "merchant"
-	return nil
+	a.Email = req.Email
+	a.Password = req.Password
+	a.Role = "merchant"
+	return a, nil
 }
 
 func (a Auth) ValidateFormLogin(req loginRequest) (Auth, error) {
@@ -109,38 +83,16 @@ func (a *Auth) EncryptPassword() (err error) {
 	return
 }
 
-func (a Auth) ValidatePassword(plainText string) (ok bool, err error) {
-	err = bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(plainText))
+func (a Auth) ValidatePassword(password string) (ok bool, err error) {
+	err = bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(password))
 	if err != nil {
-		return ok, ErrInvalidPassword
+		return ok, err
 	}
 	ok = true
 	return
 }
 
-// func errorCodeBadRequest(n string) string {
-// 	concatenated := fmt.Sprintf("%d%s", http.StatusBadRequest, n)
-// 	return concatenated
-// }
-
-// func errorCodeConflict(n string) string {
-// 	concatenated := fmt.Sprintf("%d%s", http.StatusConflict, n)
-// 	return concatenated
-// }
-
-// func errorCodeInternalServer(n string) string {
-// 	concatenated := fmt.Sprintf("%d%s", http.StatusInternalServerError, n)
-// 	return concatenated
-// }
-
 func valid(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
 }
-
-// func (a Auth) isUsed(email string) bool {
-// 	var ctx context.Context
-// 	var req registerRequest
-// 	usedEmail, _ := newHandler(authService{}).svc.IsEmailAvailable(ctx, req)
-// 	return usedEmail
-// }

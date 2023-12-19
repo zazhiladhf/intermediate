@@ -1,28 +1,24 @@
 package auth
 
 import (
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 )
 
-func Run(router fiber.Router, db *sqlx.DB) {
+func RegisterRoutesAuth(router fiber.Router, db *sqlx.DB, client *redis.Client) {
 	repo := NewPostgreSqlxRepository(db)
-	svc := NewService(repo)
-	handler := newHandler(svc)
+	redis := NewRedisRepository(client)
+	svc := NewService(repo, redis)
+	handler := NewHandler(svc)
 
-	v1 := router.Group("v1")
-	auth := v1.Group("auth")
+	authRouter := router.Group("/v1/auth")
 	{
-		auth.Post("/register", handler.RegisterAuth)
-		auth.Post("/login", handler.Login)
+		authRouter.Post("/register", handler.Register)
+		authRouter.Post("/login", handler.Login)
 	}
+
 	router.Get("", func(c *fiber.Ctx) error {
 		return c.SendString("I'm a GET request!")
 	})
-
-	// auth := router.Group("auth")
-	// {
-	// 	auth.Post("/register", handler.signUp)
-	// 	auth.Post("/signin", handler.signIn)
-	// }
 }

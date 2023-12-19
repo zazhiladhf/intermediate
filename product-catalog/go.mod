@@ -10,7 +10,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9
 	github.com/meilisearch/meilisearch-go v0.26.0
-	github.com/omeid/pgerror v0.0.0-20201018020948-42c66c4d27d4
 	gopkg.in/yaml.v2 v2.4.0
 )
 

@@ -32,6 +32,7 @@ type Redis struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
 	Password string `yaml:"password"`
+	LifeTime int    `yaml:"lifeTime"`
 }
 
 type Meili struct {

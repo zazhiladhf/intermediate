@@ -2,132 +2,87 @@ package auth
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"log"
-
-	"github.com/omeid/pgerror"
+	"product-catalog/config"
+	"product-catalog/pkg/jwt"
 )
 
-type Repository interface {
-	Save(ctx context.Context, auth Auth) (err error)
-	FindByEmail(ctx context.Context, email string) (auth Auth, err error)
-	IsEmailAlreadyExists(ctx context.Context, email string) (bool, error)
-	// readRepository
+type postgreSqlxRepository interface {
+	StoreAuth(ctx context.Context, auth Auth) (err error)
+	GetAuthByEmail(ctx context.Context, email string) (auth Auth, err error)
 }
 
-// type writeRepository interface {
-// 	save(ctx context.Context, item Auth) (err error)
-// }
-
-// type readRepository interface {
-// 	findByEmail(ctx context.Context, email string) (item Auth, err error)
-// }
+type redisRepository interface {
+	Set(ctx context.Context, email string, token string, lifeTime int) (err error)
+	Get(ctx context.Context, email string) (token string, err error)
+}
 
 type AuthService struct {
-	repo Repository
+	repo  postgreSqlxRepository
+	redis redisRepository
 }
 
-func NewService(repo Repository) AuthService {
+func NewService(repo postgreSqlxRepository, redis redisRepository) AuthService {
 	return AuthService{
-		repo: repo,
+		repo:  repo,
+		redis: redis,
 	}
 }
 
-func (s AuthService) CreateAuth(ctx context.Context, req Auth) (err error) {
-	err = req.ValidateFormRegister()
+func (s AuthService) RegisterAuth(ctx context.Context, req Auth) (err error) {
+	_, err = s.repo.GetAuthByEmail(ctx, req.Email)
 	if err != nil {
-		log.Println("error when try to validate request with error")
+		log.Println("error when try to getAuthByEmail with error", err)
 		return
 	}
 
 	err = req.EncryptPassword()
 	if err != nil {
-		log.Println("error when try to encrypt password with error")
+		log.Println("error when try to encrypt password with error", err)
 		return
 	}
 
-	email := req.Email
-
-	_, err = s.repo.IsEmailAlreadyExists(ctx, email)
+	err = s.repo.StoreAuth(ctx, req)
 	if err != nil {
-		// log.Println("auth:", auth)
-		// log.Println("error sql:", err)
-		if err == sql.ErrNoRows {
-			err = s.repo.Save(ctx, req)
-			if err != nil {
-				return
-			}
-			return
-		}
-		if pgerror.UniqueViolation(err) != nil {
-			return ErrDuplicateEmail
-		}
+		log.Println("error when try to store auth with error", err)
 		return
 	}
 
-	err = s.repo.Save(ctx, req)
-	if err != nil {
-		return
-	}
-
-	// if isExist {
-	// 	log.Println("email already used with error:", err)
-	// 	return err
-	// }
-
-	// model = req
 	return
 }
 
-func (s AuthService) Login(ctx context.Context, req loginRequest) (item Auth, err error) {
-	email := req.Email
-	password := req.Password
-
-	itemAuth, err := item.ValidateFormLogin(req)
+func (s AuthService) Login(ctx context.Context, req Auth) (item Auth, token string, err error) {
+	itemAuth, err := s.repo.GetAuthByEmail(ctx, req.Email)
 	if err != nil {
-		log.Println("error when try to validate request with error", err.Error(), itemAuth)
+		log.Println("error when try to getAuthByEmail with error", err)
 		return
 	}
 
-	itemAuth, err = s.repo.FindByEmail(ctx, email)
-	// log.Println("item auth by service", itemAuth)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Println("error when try to findbyemail with error", err.Error(), itemAuth)
-			return itemAuth, ErrRepository
-		}
+	if itemAuth.Email != req.Email {
+		return item, token, ErrInvalidEmail
 	}
 
-	if itemAuth.Email == "" {
-		log.Println("error when try to check email with error", err.Error(), itemAuth)
-		return itemAuth, ErrInvalidEmail
-	}
-
-	ok, err := itemAuth.ValidatePassword(password)
+	ok, err := itemAuth.ValidatePassword(req.Password)
 	if err != nil {
-		log.Println("error when try to validate password with error", err.Error(), itemAuth)
-		return itemAuth, ErrInvalidPassword
+		log.Println("error when try to validate password with error", err)
+		return req, token, err
 	}
 
 	if !ok {
-		log.Println("error when try to !ok with error", err.Error(), itemAuth)
-		return itemAuth, ErrInternalServer
+		log.Println("error when try to !ok with error", err)
+		return req, token, err
 	}
 
-	return itemAuth, err
-
-}
-
-func (s AuthService) GetAuthByEmail(ctx context.Context, email string) (auth Auth, err error) {
-	auth, err = s.repo.FindByEmail(ctx, email)
+	token, err = jwt.GenerateToken(itemAuth.Email)
 	if err != nil {
-		return auth, err
+		log.Println("error when trying to generate token with error:", err)
 	}
 
-	if auth.Id == 0 {
-		return auth, errors.New("no auth found on with that email")
+	err = s.redis.Set(ctx, itemAuth.Email, token, config.Cfg.Redis.LifeTime)
+	if err != nil {
+		log.Println("error when try to set data to redis with message :", err)
 	}
 
-	return auth, nil
+	return itemAuth, token, err
+
 }
