@@ -22,14 +22,14 @@ func NewPostgreSqlxRepository(db *sqlx.DB) PostgreSqlxRepository {
 	}
 }
 
-func (p PostgreSqlxRepository) FindAll(ctx context.Context) (items []Category, err error) {
+func (r PostgreSqlxRepository) FindAll(ctx context.Context) (categories []Category, err error) {
 	query := `
     	SELECT 
 			id, name 
     	FROM categories
     `
 
-	err = p.db.SelectContext(ctx, &items, query)
+	err = r.db.SelectContext(ctx, &categories, query)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrCategoriesNotFound
@@ -37,7 +37,7 @@ func (p PostgreSqlxRepository) FindAll(ctx context.Context) (items []Category, e
 		return
 	}
 
-	if len(items) == 0 {
+	if len(categories) == 0 {
 		return nil, ErrCategoriesNotFound
 	}
 

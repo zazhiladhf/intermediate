@@ -5,20 +5,20 @@ import (
 )
 
 type repository interface {
-	FindAll(ctx context.Context) (item []Category, err error)
+	FindAll(ctx context.Context) (categories []Category, err error)
 }
 
-type categoryService struct {
+type CategoryService struct {
 	repo repository
 }
 
-func newService(repo repository) categoryService {
-	return categoryService{
+func newService(repo repository) CategoryService {
+	return CategoryService{
 		repo: repo,
 	}
 }
 
-func (s categoryService) getListCategories(ctx context.Context) (list []Category, err error) {
+func (s CategoryService) getListCategories(ctx context.Context) (list []Category, err error) {
 	listCategories, err := s.repo.FindAll(ctx)
 	if err != nil {
 		if err == ErrCategoriesNotFound {

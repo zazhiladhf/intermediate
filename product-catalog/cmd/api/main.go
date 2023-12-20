@@ -92,7 +92,7 @@ func main() {
 
 	// regoster routes
 	auth.RegisterRoutesAuth(router, dbSqlx, dbRedis)
-	category.RegisterCategoriesRouter(router, dbSqlx)
+	category.RegisterRoutesCategory(router, dbSqlx)
 	// product.RegisterServiceProduct(router, dbSqlx, client)
 
 	// setup cloudinary
