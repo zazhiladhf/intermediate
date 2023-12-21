@@ -29,7 +29,7 @@ func (h categoryHandler) GetListCategories(c *fiber.Ctx) error {
 			// case "23505":
 			// 	return helper.ResponseError(c, helper.ErrDuplicateEmail)
 			default:
-				return helper.ResponseError(c, ErrRepository)
+				return helper.ResponseError(c, helper.ErrRepository)
 			}
 		} else {
 			log.Println("unknown error with error:", ErrInternalServer)
@@ -37,5 +37,5 @@ func (h categoryHandler) GetListCategories(c *fiber.Ctx) error {
 
 		return helper.ResponseError(c, err)
 	}
-	return helper.ResponseSuccess(c, true, "get categories success", http.StatusOK, listCategories)
+	return helper.ResponseSuccess(c, true, "get categories success", http.StatusOK, listCategories, nil)
 }

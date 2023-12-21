@@ -48,7 +48,7 @@ func Migrate(db *sqlx.DB) (err error) {
 
 		CREATE TABLE IF NOT EXISTS categories (
 			id SERIAL PRIMARY KEY,
-			name varchar(100) NOT NULL
+			category_name varchar(100) NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS products (
@@ -56,9 +56,10 @@ func Migrate(db *sqlx.DB) (err error) {
 			name varchar(100) NOT NULL,
 			stock int NOT NULL,
 			price int NOT NULL,
-			category_id varchar(100) NOT NULL,
+			category_id int NOT NULL,
 			image_url varchar(100) NOT NULL,
-			email_auth varchar(100) 
+			email_auth varchar(100),
+			FOREIGN KEY ("category_id") REFERENCES "categories" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 		);
 	`
 	_, err = db.Exec(query)

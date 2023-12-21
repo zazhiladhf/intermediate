@@ -13,17 +13,28 @@ var (
 	ErrPasswordEmpty   = errors.New("password required")
 	ErrInvalidPassword = errors.New("invalid password")
 	ErrDuplicateEmail  = errors.New("email already used")
-	ErrRepository      = errors.New("error repository")
-	ErrInternalServer  = errors.New("unknown error")
+
+	ErrCategoriesNotFound = errors.New("categories not found")
+
+	ErrEmptyName       = errors.New("name is required")
+	ErrEmptyImageURL   = errors.New("image_url is required")
+	ErrEmptyStock      = errors.New("stock is required")
+	ErrEmptyPrice      = errors.New("price is required")
+	ErrEmptyCategoryId = errors.New("category_id is required")
+	ErrNotFound        = errors.New("product not found")
+
+	ErrRepository     = errors.New("error repository")
+	ErrInternalServer = errors.New("unknown error")
 )
 
 type response struct {
-	HttpCode  int         `json:"-"`
-	Success   bool        `json:"success"`
-	Message   string      `json:"message"`
-	Error     string      `json:"error,omitempty"`
-	ErrorCode string      `json:"error_code,omitempty"`
-	Payload   interface{} `json:"payload,omitempty"`
+	HttpCode   int         `json:"-"`
+	Success    bool        `json:"success"`
+	Message    string      `json:"message"`
+	Error      string      `json:"error,omitempty"`
+	ErrorCode  string      `json:"error_code,omitempty"`
+	Payload    interface{} `json:"payload,omitempty"`
+	Pagination interface{} `json:"pagination,omitempty"`
 }
 
 type Payload struct {
@@ -51,7 +62,7 @@ func ApiResponse(c *fiber.Ctx, httpCode int, success bool, message string, err s
 	})
 }
 
-func ResponseSuccess(c *fiber.Ctx, success bool, message string, httpCode int, payload interface{}) error {
+func ResponseSuccess(c *fiber.Ctx, success bool, message string, httpCode int, payload interface{}, pagination interface{}) error {
 	resp := response{
 		Success:   success,
 		Message:   message,
@@ -75,9 +86,48 @@ func ResponseError(c *fiber.Ctx, err error) error {
 		return ApiResponse(c, http.StatusBadRequest, false, "bad request", err.Error(), "40004", nil)
 	case err == ErrDuplicateEmail:
 		return ApiResponse(c, http.StatusConflict, false, "duplicate entry", err.Error(), "40901", nil)
+	case err == ErrCategoriesNotFound:
+		return ApiResponse(c, http.StatusNotFound, false, "category not found", err.Error(), "40401", nil)
+
+	case err == ErrEmptyName:
+		return ApiResponse(c, http.StatusBadRequest, false, "bad request", err.Error(), "40401", nil)
+	case err == ErrEmptyImageURL:
+		return ApiResponse(c, http.StatusBadRequest, false, "bad request", err.Error(), "40402", nil)
+	case err == ErrEmptyStock:
+		return ApiResponse(c, http.StatusBadRequest, false, "bad request", err.Error(), "40403", nil)
+	case err == ErrEmptyPrice:
+		return ApiResponse(c, http.StatusBadRequest, false, "bad request", err.Error(), "40404", nil)
+	case err == ErrEmptyCategoryId:
+		return ApiResponse(c, http.StatusBadRequest, false, "bad request", err.Error(), "40405", nil)
+	case err == ErrNotFound:
+		return ApiResponse(c, http.StatusNotFound, false, "category not found", err.Error(), "40401", nil)
+
 	case err == ErrRepository:
 		return ApiResponse(c, http.StatusInternalServerError, false, "error repository", err.Error(), "50001", nil)
 	default:
 		return ApiResponse(c, http.StatusInternalServerError, false, "internal server error", err.Error(), "99999", nil)
 	}
+}
+
+type Pagination struct {
+	Query string `json:"query"`
+	Limit int    `json:"limit"`
+	Page  int    `json:"page"`
+	Total int    `json:"total"`
+}
+
+func NewPaginationResponse(queryParam string, limit, page, totalData int) Pagination {
+	return Pagination{
+		Query: queryParam,
+		// Limit:     limit,
+		// Page:      page,
+		Total: CountTotalPage(totalData, limit),
+	}
+}
+
+func CountTotalPage(total, limit int) int {
+	if limit == 0 {
+		return 0
+	}
+	return (total + limit - 1) / limit
 }

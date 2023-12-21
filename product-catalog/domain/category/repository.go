@@ -3,13 +3,8 @@ package category
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/jmoiron/sqlx"
-)
-
-var (
-	ErrCategoriesNotFound = errors.New("categories not found")
 )
 
 type PostgreSqlxRepository struct {
@@ -22,10 +17,10 @@ func NewPostgreSqlxRepository(db *sqlx.DB) PostgreSqlxRepository {
 	}
 }
 
-func (r PostgreSqlxRepository) FindAll(ctx context.Context) (categories []Category, err error) {
+func (r PostgreSqlxRepository) FindAllCategory(ctx context.Context) (categories []Category, err error) {
 	query := `
     	SELECT 
-			id, name 
+			id, category_name 
     	FROM categories
     `
 

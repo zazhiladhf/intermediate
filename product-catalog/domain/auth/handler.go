@@ -41,9 +41,9 @@ func (h AuthHandler) Register(c *fiber.Ctx) (err error) {
 		if ok {
 			switch pqErr.Code {
 			case "23505":
-				return helper.ResponseError(c, ErrDuplicateEmail)
+				return helper.ResponseError(c, helper.ErrDuplicateEmail)
 			default:
-				return helper.ResponseError(c, ErrRepository)
+				return helper.ResponseError(c, helper.ErrRepository)
 			}
 		} else {
 			log.Println("unknown error with error:", ErrInternalServer)
@@ -52,7 +52,7 @@ func (h AuthHandler) Register(c *fiber.Ctx) (err error) {
 		return helper.ResponseError(c, err)
 	}
 
-	return helper.ResponseSuccess(c, true, "registration success", http.StatusCreated, nil)
+	return helper.ResponseSuccess(c, true, "registration success", http.StatusCreated, nil, nil)
 }
 
 func (h AuthHandler) Login(c *fiber.Ctx) error {
@@ -73,11 +73,25 @@ func (h AuthHandler) Login(c *fiber.Ctx) error {
 	itemAuth, token, err := h.svc.Login(c.UserContext(), model)
 	if err != nil {
 		log.Println("error when try to login with error", err)
+		if err == ErrInvalidEmail {
+			return helper.ResponseError(c, helper.ErrInvalidEmail)
+		}
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code {
+			case "23505":
+				return helper.ResponseError(c, helper.ErrDuplicateEmail)
+			default:
+				return helper.ResponseError(c, helper.ErrRepository)
+			}
+		} else {
+			log.Println("unknown error with error:", err)
+		}
 		return helper.ResponseError(c, err)
 	}
 
 	return helper.ResponseSuccess(c, true, "login success", http.StatusOK, Payload{
 		AccessToken: token,
 		Role:        itemAuth.Role,
-	})
+	}, nil)
 }

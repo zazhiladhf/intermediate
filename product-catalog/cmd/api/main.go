@@ -7,9 +7,11 @@ import (
 	"product-catalog/domain/auth"
 	"product-catalog/domain/category"
 	"product-catalog/domain/files"
+	"product-catalog/domain/product"
 	"product-catalog/pkg/database"
 	"product-catalog/pkg/images"
 	"product-catalog/pkg/middleware"
+	"product-catalog/pkg/search"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -65,7 +67,7 @@ func main() {
 	// setup database PostgreSQL
 	dbSqlx, err := database.ConnectPostgresSqlx(config.Cfg.DB)
 	if err != nil {
-		log.Println("error when to try migration db with error :", err.Error())
+		log.Println("error connect postgre with error :", err.Error())
 		// panic(err)
 	}
 
@@ -76,10 +78,10 @@ func main() {
 	}
 
 	// setup meilisearch
-	// client, err := search.ConnectMeilisearch(config.Cfg.Meili.Host, config.Cfg.Meili.ApiKey)
-	// if err != nil {
-	// 	log.Println("error connect meili", err)
-	// }
+	client, err := search.ConnectMeilisearch(config.Cfg.Meili.Host, config.Cfg.Meili.ApiKey)
+	if err != nil {
+		log.Println("error connect meili", err)
+	}
 
 	// migration db
 	log.Println("running db migration")
@@ -93,7 +95,7 @@ func main() {
 	// regoster routes
 	auth.RegisterRoutesAuth(router, dbSqlx, dbRedis)
 	category.RegisterRoutesCategory(router, dbSqlx)
-	// product.RegisterServiceProduct(router, dbSqlx, client)
+	product.RegisterRoutesProduct(router, dbSqlx, client)
 
 	// setup cloudinary
 	cloudName := config.Cfg.Cloudinary.Name

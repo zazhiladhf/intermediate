@@ -5,7 +5,7 @@ import (
 )
 
 type repository interface {
-	FindAll(ctx context.Context) (categories []Category, err error)
+	FindAllCategory(ctx context.Context) (categories []Category, err error)
 }
 
 type CategoryService struct {
@@ -19,7 +19,7 @@ func newService(repo repository) CategoryService {
 }
 
 func (s CategoryService) getListCategories(ctx context.Context) (list []Category, err error) {
-	listCategories, err := s.repo.FindAll(ctx)
+	listCategories, err := s.repo.FindAllCategory(ctx)
 	if err != nil {
 		if err == ErrCategoriesNotFound {
 			return []Category{}, nil

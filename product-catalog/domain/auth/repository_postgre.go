@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -50,7 +49,7 @@ func (r PostgreSqlxRepository) GetAuthByEmail(ctx context.Context, email string)
 
 	err = r.db.GetContext(ctx, &auth, query, email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if err == sql.ErrNoRows {
 			return Auth{}, nil
 		}
 	}
