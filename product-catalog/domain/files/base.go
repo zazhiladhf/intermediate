@@ -7,14 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterRouteFiles(router fiber.Router, client images.Cloudinary, cloud string, apiKey string, apiSecret string) {
+func RegisterRoutesFile(router fiber.Router, client images.Cloudinary, cloud string, apiKey string, apiSecret string) {
 	cloudSvc, _ := images.NewCloudinary(cloud, apiKey, apiSecret)
 	handler := NewHandler(cloudSvc)
 
-	v1 := router.Group("v1")
-	files := v1.Group("/files")
+	filesRouter := router.Group("/v1/files")
 	{
-		files.Post("/upload", middleware.AuthMiddleware(), handler.Upload)
-		// files.Post("/download", Download)
+		filesRouter.Post("/upload", middleware.AuthMiddleware(), handler.Upload)
 	}
 }

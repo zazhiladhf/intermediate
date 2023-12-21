@@ -83,6 +83,16 @@ func main() {
 		log.Println("error connect meili", err)
 	}
 
+	// setup cloudinary
+	cloudName := config.Cfg.Cloudinary.Name
+	apiKey := config.Cfg.Cloudinary.ApiKey
+	apiSecret := config.Cfg.Cloudinary.ApiSecret
+
+	cloudClient, err := images.NewCloudinary(cloudName, apiKey, apiSecret)
+	if err != nil {
+		panic(err)
+	}
+
 	// migration db
 	log.Println("running db migration")
 	err = database.Migrate(dbSqlx)
@@ -96,17 +106,7 @@ func main() {
 	auth.RegisterRoutesAuth(router, dbSqlx, dbRedis)
 	category.RegisterRoutesCategory(router, dbSqlx)
 	product.RegisterRoutesProduct(router, dbSqlx, client)
-
-	// setup cloudinary
-	cloudName := config.Cfg.Cloudinary.Name
-	apiKey := config.Cfg.Cloudinary.ApiKey
-	apiSecret := config.Cfg.Cloudinary.ApiSecret
-
-	cloudClient, err := images.NewCloudinary(cloudName, apiKey, apiSecret)
-	if err != nil {
-		panic(err)
-	}
-	files.RegisterRouteFiles(router, cloudClient, cloudName, apiKey, apiSecret)
+	files.RegisterRoutesFile(router, cloudClient, cloudName, apiKey, apiSecret)
 
 	// listen app
 	router.Listen(config.Cfg.App.Port)

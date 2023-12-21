@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"log"
+	"product-catalog/pkg/helper"
 	"product-catalog/pkg/jwt"
 
 	"github.com/gofiber/fiber/v2"
@@ -48,13 +49,12 @@ func AuthMiddleware() fiber.Handler {
 
 		claims, err := jwt.ExtractTokenMetadata(c)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": true,
-				"msg":   err.Error(),
-			})
+			log.Println("error when try extract token metadata with error", err)
+			return helper.ResponseError(c, helper.ErrRepository)
+
 		}
 
-		log.Println(&claims)
+		// log.Println(&claims)
 
 		// id := claims.Id
 		email := claims.Email
@@ -62,7 +62,7 @@ func AuthMiddleware() fiber.Handler {
 
 		// ctx.Locals("id", id)
 		c.Locals("email", email)
-		log.Println(email)
+		// log.Println(email)
 		// ctx.Locals("role", role)
 
 		return c.Next()

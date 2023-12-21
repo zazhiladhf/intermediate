@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"product-catalog/pkg/helper"
 	"product-catalog/pkg/images"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,14 +30,14 @@ func (h cloudHandler) Upload(c *fiber.Ctx) error {
 	file, err := c.FormFile("file")
 	if err != nil {
 		log.Println("error when try to parse FormFile with detail :", err.Error())
-		return err
+		return helper.ResponseError(c, err)
 	}
 
 	if file.Size > 1*1024*1024 {
 		errBadrequest := fiber.ErrBadRequest
 		errBadrequest.Message = "file to big. expected 1MB"
 		log.Println("error with detail :", errBadrequest.Error(), "file size :", (file.Size / 1024 / 1024), "MB")
-		return errBadrequest
+		return helper.ResponseError(c, errBadrequest)
 	}
 
 	typeFile := c.FormValue("type", "")
@@ -66,7 +67,8 @@ func (h cloudHandler) Upload(c *fiber.Ctx) error {
 	if err != nil {
 		errBadrequest := fiber.ErrBadRequest
 		errBadrequest.Message = err.Error()
-		return errBadrequest
+		log.Println("error when try to open file with detail :", err.Error())
+		return helper.ResponseError(c, errBadrequest)
 	}
 
 	defer source.Close()
@@ -101,10 +103,9 @@ func (h cloudHandler) Upload(c *fiber.Ctx) error {
 	// 	return errInternal
 	// }
 
-	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"message": "file upload successfully",
-		"url":     uri,
-	})
+	return helper.ResponseSuccess(c, true, "upload file success", http.StatusOK, helper.Payload{
+		Url: uri,
+	}, nil)
 }
 
 // func Download(c *fiber.Ctx) error {

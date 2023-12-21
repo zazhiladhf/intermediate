@@ -40,6 +40,7 @@ type response struct {
 type Payload struct {
 	AccessToken string `json:"access_token,omitempty"`
 	Role        string `json:"role,omitempty"`
+	Url         string `json:"url,omitempty"`
 }
 
 func ApiResponse(c *fiber.Ctx, httpCode int, success bool, message string, err string, errorCode string, payload interface{}) error {

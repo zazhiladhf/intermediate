@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"log"
 	"strings"
 	"time"
 
@@ -126,7 +125,7 @@ func ExtractTokenMetadata(c *fiber.Ctx) (*TokenMetadata, error) {
 
 func extractToken(c *fiber.Ctx) string {
 	bearToken := c.Get("Authorization")
-	log.Println(bearToken)
+	// log.Println(bearToken)
 
 	// Normally Authorization HTTP header.
 	onlyToken := strings.Split(bearToken, " ")
